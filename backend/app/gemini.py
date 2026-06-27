@@ -1,0 +1,242 @@
+import json
+import hashlib
+from sqlalchemy.orm import Session
+from app.config import settings
+from app.models import Career, CacheEntry
+
+GEMINI_AVAILABLE = False
+model = None
+
+if settings.GEMINI_API_KEY:
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        GEMINI_AVAILABLE = True
+    except Exception:
+        pass
+
+def _get_cache(key: str, db: Session) -> dict | None:
+    if not settings.CACHE_ENABLED:
+        return None
+    entry = db.query(CacheEntry).filter(CacheEntry.cache_key == key).first()
+    return entry.data if entry else None
+
+def _set_cache(key: str, data: dict, db: Session):
+    if not settings.CACHE_ENABLED:
+        return
+    existing = db.query(CacheEntry).filter(CacheEntry.cache_key == key).first()
+    if existing:
+        existing.data = data
+    else:
+        db.add(CacheEntry(cache_key=key, data=data))
+    db.commit()
+
+def _call_gemini(prompt: str) -> str:
+    if not GEMINI_AVAILABLE or not model:
+        return ""
+    try:
+        resp = model.generate_content(prompt)
+        return resp.text
+    except Exception:
+        return ""
+
+def score_careers(profile_data: dict, db: Session) -> list[dict]:
+    careers = db.query(Career).filter(Career.status == "published").all()
+    if not careers:
+        return []
+
+    cache_key = hashlib.md5(
+        (json.dumps(profile_data, sort_keys=True) + "_v1").encode()
+    ).hexdigest()
+
+    cached = _get_cache(cache_key, db)
+    if cached:
+        return cached["results"]
+
+    if GEMINI_AVAILABLE and careers:
+        career_text = json.dumps([
+            {"id": c.id, "title": c.title, "category": c.category, "description": c.description,
+             "required_skills": c.required_skills, "market_prospect": c.market_prospect, "ai_risk": c.ai_risk}
+            for c in careers
+        ], ensure_ascii=False)
+
+        prompt = f"""Kamu adalah asisten karir untuk Life Compass. Berikut data user:
+{json.dumps(profile_data, ensure_ascii=False, indent=2)}
+
+Bandingkan dengan {len(careers)} data karir berikut:
+{career_text}
+
+Beri skor 0-100 untuk SETIAP karir berdasarkan:
+1. Kecocokan minat (20%)
+2. Kecocokan nilai kerja (20%)
+3. Kedekatan skill (20%)
+4. Kecocokan kendala (15%)
+5. Kelayakan pasar (15%)
+6. Risiko (10%)
+
+Output: JSON array saja, tanpa teks lain. Format: [{{"career_id": int, "title": str, "score": float, "label": str, "reason": str}}]
+Label: Cocok Tinggi (>=80), Cocok Sedang (60-79), Coba Dulu (40-59), Kurang Cocok (<40)"""
+
+        result = _call_gemini(prompt)
+        if result:
+            try:
+                cleaned = result.strip()
+                if cleaned.startswith("```json"):
+                    cleaned = cleaned.split("```json")[1].split("```")[0]
+                elif cleaned.startswith("```"):
+                    cleaned = cleaned.split("```")[1].split("```")[0]
+                results = json.loads(cleaned.strip())
+                _set_cache(cache_key, {"results": results, "cache_key": cache_key}, db)
+                return results
+            except (json.JSONDecodeError, KeyError, IndexError):
+                pass
+
+    return _fallback_scoring(profile_data, careers, db)
+
+def _fallback_scoring(profile_data: dict, careers: list, db: Session) -> list[dict]:
+    results = []
+    user_interests = set(i.lower() for i in profile_data.get("interests", []))
+    user_skills = set(s.lower() for s in profile_data.get("skills", []))
+    user_values = set(v.lower() for v in profile_data.get("work_values", []))
+
+    for c in careers:
+        score = 50.0
+        reasons = []
+
+        career_skills = set(s.lower() for s in (c.required_skills or []))
+        overlap = user_skills & career_skills
+        if overlap:
+            score += len(overlap) * 5
+            reasons.append(f"Skill cocok: {', '.join(list(overlap)[:3])}")
+
+        if user_interests:
+            cat_match = any(kw in c.category.lower() for kw in user_interests)
+            if cat_match:
+                score += 10
+                reasons.append("Kategori sesuai minat")
+
+        score = min(score, 98)
+
+        if score >= 80:
+            label = "Cocok Tinggi"
+        elif score >= 60:
+            label = "Cocok Sedang"
+        elif score >= 40:
+            label = "Coba Dulu"
+        else:
+            label = "Kurang Cocok"
+
+        results.append({
+            "career_id": c.id,
+            "title": c.title,
+            "score": round(score, 1),
+            "label": label,
+            "reason": "; ".join(reasons[:2]) if reasons else "Belum ada data cukup"
+        })
+
+    results.sort(key=lambda x: x["score"], reverse=True)
+    cache_key = hashlib.md5(
+        (json.dumps(profile_data, sort_keys=True) + "_v1").encode()
+    ).hexdigest()
+    _set_cache(cache_key, {"results": results, "cache_key": cache_key}, db)
+    return results
+
+def generate_summary(profile_data: dict) -> str:
+    if not GEMINI_AVAILABLE:
+        return generate_fallback_summary(profile_data)
+
+    prompt = f"""Buat ringkasan profil karir 2-3 paragraf dalam Bahasa Indonesia dari data berikut:
+{json.dumps(profile_data, ensure_ascii=False, indent=2)}
+
+Fokus: minat, nilai kerja, skill, dan kendala user. Bahasa Indonesia yang ramah."""
+    result = _call_gemini(prompt)
+    if result:
+        return result
+    return generate_fallback_summary(profile_data)
+
+def generate_fallback_summary(profile_data: dict) -> str:
+    interests = profile_data.get("interests", [])
+    skills = profile_data.get("skills", [])
+    values = profile_data.get("work_values", [])
+    stage = profile_data.get("stage", "")
+    parts = [f"Kamu sedang dalam tahap: {stage}."]
+    if interests:
+        parts.append(f"Kamu tertarik pada: {', '.join(interests[:3])}.")
+    if skills:
+        parts.append(f"Keahlian: {', '.join(skills[:3])}.")
+    if values:
+        parts.append(f"Nilai kerja penting: {', '.join(values[:3])}.")
+    return " ".join(parts)
+
+def generate_experiment_plan(career_title: str, profile_data: dict) -> list[str]:
+    if not GEMINI_AVAILABLE:
+        return [
+            f"Hari 1: Cari 3 lowongan {career_title} dan catat skill yang diminta",
+            f"Hari 2: Tonton 1 video tentang keseharian {career_title}",
+            f"Hari 3: Coba 1 mini-project sederhana di bidang ini",
+            f"Hari 4: Hubungi 1 orang yang bekerja sebagai {career_title}",
+            f"Hari 5: Baca artikel tentang perkembangan karir ini",
+            f"Hari 6: Bandingkan 2 jalur pendidikan untuk masuk ke bidang ini",
+            f"Hari 7: Diskusikan dengan teman/keluarga tentang apa yang kamu pelajari"
+        ]
+
+    prompt = f"""Buat rencana eksperimen 7 hari untuk karir "{career_title}" dalam Bahasa Indonesia. Profil user:
+{json.dumps(profile_data, ensure_ascii=False, indent=2)}
+
+Output: JSON array of 7 string tasks. Tugas harus konkret, murah, dan bisa dilakukan dalam 30-60 menit per hari."""
+    result = _call_gemini(prompt)
+    if result:
+        try:
+            cleaned = result.strip()
+            if cleaned.startswith("```json"):
+                cleaned = cleaned.split("```json")[1].split("```")[0]
+            elif cleaned.startswith("```"):
+                cleaned = cleaned.split("```")[1].split("```")[0]
+            return json.loads(cleaned.strip())
+        except (json.JSONDecodeError, IndexError):
+            pass
+    return [
+        f"Hari 1: Cari 3 lowongan {career_title} dan catat skill yang diminta",
+        f"Hari 2: Tonton 1 video tentang keseharian {career_title}",
+        f"Hari 3: Coba 1 mini-project sederhana di bidang ini",
+        f"Hari 4: Hubungi 1 orang yang bekerja sebagai {career_title}",
+        f"Hari 5: Baca artikel tentang perkembangan karir ini",
+        f"Hari 6: Bandingkan 2 jalur pendidikan untuk masuk ke bidang ini",
+        f"Hari 7: Diskusikan dengan teman/keluarga tentang apa yang kamu pelajari"
+    ]
+
+def generate_family_script(career_title: str, profile_data: dict, reason: str) -> str:
+    if not GEMINI_AVAILABLE:
+        return f"Ibu/Ayah, setelah mengikuti tes karir di Life Compass, aku dapat rekomendasi untuk menjadi {career_title}. Ini cocok dengan minat dan keahlianku. Aku ingin menjelaskan kenapa aku memilih jalur ini dan apa rencanaku ke depan."
+
+    prompt = f"""Buat skrip diskusi keluarga dalam Bahasa Indonesia. User mendapat rekomendasi karir: {career_title}.
+Profil: {json.dumps(profile_data, ensure_ascii=False, indent=2)}
+Alasan: {reason}
+
+Buat poin-poin argumen yang bisa diucapkan user ke orang tua/keluarga untuk menjelaskan pilihan karir ini. 3-5 poin, bahasa santai tapi sopan."""
+    result = _call_gemini(prompt)
+    return result if result else f"Poin diskusi untuk {career_title}:\n1. Minatku cocok dengan bidang ini\n2. Prospek karirnya menjanjikan\n3. Aku punya rencana belajar yang jelas"
+
+def chat_response(question: str) -> str:
+    if not GEMINI_AVAILABLE:
+        return "Maaf, fitur chat sedang tidak tersedia. Silakan cek halaman FAQ untuk informasi lebih lanjut."
+
+    system_prompt = """Kamu adalah asisten resmi Life Compass. Tugasmu hanya menjawab pertanyaan seputar:
+- Cara menggunakan Life Compass
+- Fitur gratis vs berbayar (Free Snapshot gratis, Full Report Rp25.000)
+- Cara pembayaran (Mayar.id, Rp25.000 sekali bayar, akses seumur hidup)
+- Cara baca hasil rekomendasi
+- Cara bagikan hasil
+- Kebijakan privasi
+- Cara hapus akun
+
+Jika ditanya di luar topik Life Compass, jawab: "Maaf, saya hanya bisa membantu pertanyaan seputar Life Compass. Silakan cek FAQ atau hubungi support."
+Gunakan bahasa Indonesia yang ramah dan mudah dipahami."""
+
+    try:
+        chat_model = __import__("google.generativeai").GenerativeModel("gemini-1.5-flash", system_instruction=system_prompt)
+        resp = chat_model.generate_content(question)
+        return resp.text
+    except Exception:
+        return "Maaf, saya sedang tidak bisa menjawab. Silakan coba lagi nanti atau cek FAQ."
