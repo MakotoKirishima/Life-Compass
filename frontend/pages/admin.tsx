@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 export default function Admin({ user, api }) {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
-  const [payments, setPayments] = useState([]);
   const [tab, setTab] = useState("stats");
   const [landing, setLanding] = useState<any>({});
   const [careers, setCareers] = useState([]);
@@ -15,8 +14,6 @@ export default function Admin({ user, api }) {
       .then(r => r.json()).then(setStats).catch(() => {});
     fetch(`${api}/api/admin/users`, { headers: { Authorization: `Bearer ${user.token}` } })
       .then(r => r.json()).then(setUsers).catch(() => {});
-    fetch(`${api}/api/admin/payments`, { headers: { Authorization: `Bearer ${user.token}` } })
-      .then(r => r.json()).then(setPayments).catch(() => {});
     fetch(`${api}/api/admin/landing-page`)
       .then(r => r.json()).then(setLanding).catch(() => {});
     fetch(`${api}/api/careers/`)
@@ -43,20 +40,18 @@ export default function Admin({ user, api }) {
 
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex gap-2 mb-6 overflow-x-auto">
-          {["stats", "users", "payments", "careers", "landing"].map(t => (
+          {["stats", "users", "careers", "landing"].map(t => (
             <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${tab === t ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
-              {t === "stats" ? "Statistik" : t === "users" ? "User" : t === "payments" ? "Pembayaran" : t === "careers" ? "Karir" : "Landing Page"}
+              {t === "stats" ? "Statistik" : t === "users" ? "User" : t === "careers" ? "Karir" : "Landing Page"}
             </button>
           ))}
         </div>
 
         {tab === "stats" && stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
             {[
               { label: "Total User", value: stats.total_users },
               { label: "Selesai Discovery", value: stats.completed_discovery },
-              { label: "Total Pembayaran", value: stats.total_payments },
-              { label: "Pendapatan", value: `Rp${(stats.revenue || 0).toLocaleString()}` },
             ].map(s => (
               <div key={s.label} className="bg-white p-6 rounded-xl shadow-sm border">
                 <p className="text-gray-500 text-sm">{s.label}</p>
@@ -69,7 +64,7 @@ export default function Admin({ user, api }) {
         {tab === "users" && (
           <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50"><tr>{["ID", "Email", "Nama", "Tanggal", "Bayar"].map(h => <th key={h} className="text-left p-3 font-medium">{h}</th>)}</tr></thead>
+              <thead className="bg-gray-50"><tr>{["ID", "Email", "Nama", "Tanggal"].map(h => <th key={h} className="text-left p-3 font-medium">{h}</th>)}</tr></thead>
               <tbody>
                 {users.map(u => (
                   <tr key={u.id} className="border-t">
@@ -77,27 +72,6 @@ export default function Admin({ user, api }) {
                     <td className="p-3">{u.email || "-"}</td>
                     <td className="p-3">{u.display_name || "-"}</td>
                     <td className="p-3">{u.created_at?.substring(0, 10)}</td>
-                    <td className="p-3">{u.has_paid ? "✅" : "❌"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {tab === "payments" && (
-          <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50"><tr>{["ID", "User", "Jumlah", "Status", "Tipe", "Tanggal"].map(h => <th key={h} className="text-left p-3 font-medium">{h}</th>)}</tr></thead>
-              <tbody>
-                {payments.map(p => (
-                  <tr key={p.id} className="border-t">
-                    <td className="p-3">{p.id}</td>
-                    <td className="p-3">{p.user_id}</td>
-                    <td className="p-3">Rp{p.amount?.toLocaleString()}</td>
-                    <td className="p-3"><span className={`px-2 py-1 rounded-full text-xs ${p.status === "completed" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>{p.status}</span></td>
-                    <td className="p-3">{p.product_type}</td>
-                    <td className="p-3">{p.created_at?.substring(0, 10)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -160,10 +134,6 @@ export default function Admin({ user, api }) {
                 <input value={landing[f] || ""} onChange={e => setLanding({...landing, [f]: e.target.value})} className="w-full border rounded-lg px-4 py-2" />
               </div>
             ))}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Harga</label>
-              <input type="number" value={landing.price || 25000} onChange={e => setLanding({...landing, price: parseInt(e.target.value)})} className="w-full border rounded-lg px-4 py-2" />
-            </div>
             <button onClick={updateLanding} className="bg-blue-600 text-white px-6 py-2 rounded-lg">Simpan</button>
           </div>
         )}

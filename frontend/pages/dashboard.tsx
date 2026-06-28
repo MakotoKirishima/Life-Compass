@@ -18,8 +18,6 @@ export default function Dashboard({ user, api, logout }) {
   const [history, setHistory] = useState([]);
   const [loadingText, setLoadingText] = useState("");
   const [trivia, setTrivia] = useState("");
-  const [showFullReport, setShowFullReport] = useState(false);
-  const [fullReport, setFullReport] = useState(null);
   const [error, setError] = useState("");
 
   const triviaList = [
@@ -96,32 +94,6 @@ export default function Dashboard({ user, api, logout }) {
     window.location.href = "/dashboard";
   };
 
-  const handleBuyReport = () => {
-    fetch(`${api}/api/payment/create`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${user.token}` },
-    })
-      .then(r => r.json())
-      .then(data => {
-        window.open(data.checkout_url, "_blank");
-        alert("Setelah pembayaran selesai, klik 'Cek Status' untuk mengakses laporan.");
-      })
-      .catch(() => alert("Gagal membuat pembayaran."));
-  };
-
-  const loadFullReport = async () => {
-    const res = await fetch(`${api}/api/payment/status`, {
-      headers: { Authorization: `Bearer ${user.token}` },
-    });
-    const data = await res.json();
-    if (data.has_access) {
-      setShowFullReport(true);
-      setFullReport(result);
-    } else {
-      alert("Kamu belum memiliki akses. Silakan lakukan pembayaran terlebih dahulu.");
-    }
-  };
-
   if (!user) return null;
 
   if (step === -1) {
@@ -176,38 +148,15 @@ export default function Dashboard({ user, api, logout }) {
                 </div>
 
                 <div className="flex gap-3">
-                  <a href={`/result?id=${result.match_id}`} className="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm">Lihat Detail</a>
+                  <a href={`/full-report?id=${result.match_id}`} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium">
+                    Buka Laporan Lengkap
+                  </a>
                   <button onClick={() => {
                     const url = `${window.location.origin}/result?id=${result.match_id}`;
                     navigator.clipboard?.writeText(url);
                     alert("Link hasil disalin!");
                   }} className="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm">Bagikan</button>
-                  {!showFullReport ? (
-                    <button onClick={handleBuyReport} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 text-sm ml-auto font-medium">
-                      Buka Laporan Lengkap — Rp25.000
-                    </button>
-                  ) : null}
                 </div>
-
-                {!showFullReport ? (
-                  <button onClick={loadFullReport} className="mt-3 text-blue-600 text-sm hover:underline">
-                    Sudah bayar? Klik untuk cek akses
-                  </button>
-                ) : (
-                  <div className="mt-6 p-4 bg-blue-50 rounded-xl">
-                    <h3 className="font-bold text-lg mb-4">Full Compass Report 🔓</h3>
-                    <div className="space-y-4">
-                      <p>Berikut 3 rekomendasi karir teratas:</p>
-                      {result.results?.slice(0, 3).map((c, i) => (
-                        <div key={i} className="bg-white p-3 rounded-lg border">
-                          <p className="font-semibold">{c.title}</p>
-                          <p className="text-sm text-gray-600">Skor: {c.score} — {c.label}</p>
-                          <p className="text-sm text-gray-600">{c.reason}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
 
               {history.length > 0 && (
@@ -224,14 +173,14 @@ export default function Dashboard({ user, api, logout }) {
           ) : (
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-3">Mulai Perjalanan Karirmu</h2>
-              <p className="text-gray-500 mb-8">Jawab 6 pertanyaan sederhana (8-12 menit) dan dapatkan Direction Map gratismu.</p>
+              <p className="text-gray-500 mb-8">Jawab 7 pertanyaan sederhana (8-12 menit) dan dapatkan Direction Map-mu.</p>
               <div className="bg-white rounded-xl border p-6 mb-6 text-left text-sm text-gray-600">
                 <p className="font-medium text-gray-800 mb-2">Kamu akan mendapatkan:</p>
                 <ul className="space-y-2">
                   <li>✅ 1 rekomendasi karir utama + penjelasan</li>
                   <li>✅ 1 karir alternatif untuk eksplorasi</li>
                   <li>✅ Rencana eksperimen 7 hari konkret</li>
-                  <li>✅ Laporan lengkap (opsional, berbayar)</li>
+                  <li>✅ Laporan lengkap gratis</li>
                 </ul>
               </div>
               <button onClick={() => setStep(0)} className="bg-blue-600 text-white px-8 py-4 rounded-xl text-lg hover:bg-blue-700 transition font-medium shadow-lg">

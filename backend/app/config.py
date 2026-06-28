@@ -14,10 +14,6 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     GOOGLE_CLIENT_ID: str = ""
     GEMINI_API_KEY: str = ""
-    MAYAR_API_KEY: str = ""
-    MAYAR_WEBHOOK_SECRET: str = ""
-    MAYAR_PRODUCT_PRICE: int = 25000
-    MAYAR_PRODUCT_TYPE: str = "full_report"
     ADMIN_EMAILS: str = ""
     INITIAL_ADMIN_EMAIL: str = ""
     INITIAL_ADMIN_PASSWORD: str = ""

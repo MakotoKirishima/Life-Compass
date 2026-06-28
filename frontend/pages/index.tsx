@@ -95,14 +95,14 @@ export default function Landing({ user, logout, api }) {
               <p className="text-sm text-gray-600">{sample.exploration.reason}</p>
             </div>
             <a href="/login" className="block text-center bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-medium mt-4">
-              Mulai Sekarang — Gratis
+              Mulai Sekarang
             </a>
           </div>
         )}
 
         {!showSample && (
           <a href="/login" className="inline-block bg-blue-600 text-white px-8 py-4 rounded-lg text-lg hover:bg-blue-700 transition font-medium shadow-lg">
-            Mulai Sekarang — Gratis
+            Mulai Sekarang
           </a>
         )}
       </main>

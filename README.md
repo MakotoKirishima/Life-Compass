@@ -35,10 +35,6 @@ Alat bantu keputusan karir berbasis AI. Frontend: Cloudflare Pages. Backend: Fas
 | REFRESH_TOKEN_EXPIRE_DAYS | Refresh token TTL |
 | GOOGLE_CLIENT_ID | Google OAuth client ID |
 | GEMINI_API_KEY | Google Gemini API key for AI features |
-| MAYAR_API_KEY | Mayar payment gateway API key |
-| MAYAR_WEBHOOK_SECRET | Mayar webhook verification secret |
-| MAYAR_PRODUCT_PRICE | Product price in IDR |
-| MAYAR_PRODUCT_TYPE | Product type identifier |
 | ADMIN_EMAILS | Comma-separated admin email addresses |
 | INITIAL_ADMIN_EMAIL | Email for admin auto-seed |
 | INITIAL_ADMIN_PASSWORD | Password for admin auto-seed |

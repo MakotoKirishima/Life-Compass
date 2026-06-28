@@ -54,21 +54,19 @@ def submit_discovery(data: DiscoveryInput, current_user: User = Depends(get_curr
         "match_id": match.id, "summary": summary,
         "top_recommendation": {"career_title": top["title"], "score": top["score"], "label": top["label"], "reason": top["reason"]},
         "exploration": {"career_title": alt["title"], "score": alt["score"], "label": alt["label"], "reason": alt["reason"]},
-        "risk_note": risk_note, "experiment_plan": tasks, "is_paid_unlocked": False
+        "risk_note": risk_note, "experiment_plan": tasks, "results": scored
     }
 
 @router.get("/history")
 def get_history(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     matches = db.query(CareerMatch).filter(CareerMatch.user_id == current_user.id).order_by(CareerMatch.created_at.desc()).all()
-    return [{"match_id": m.id, "created_at": str(m.created_at), "top_result": m.results[0]["title"] if m.results else "", "is_paid": not m.is_free_visible} for m in matches]
+    return [{"match_id": m.id, "created_at": str(m.created_at), "top_result": m.results[0]["title"] if m.results else ""} for m in matches]
 
 @router.get("/result/{match_id}")
 def get_result(match_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     match = db.query(CareerMatch).filter(CareerMatch.id == match_id, CareerMatch.user_id == current_user.id).first()
     if not match:
         return {"error": "Not found"}, 404
-    from app.models import UserEntitlement
-    paid = db.query(UserEntitlement).filter(UserEntitlement.user_id == current_user.id, UserEntitlement.product_type == "full_report", UserEntitlement.status == "active").first()
     results = match.results or []
     top = results[0] if results else {}
     alt = results[1] if len(results) > 1 else (results[0] if results else {})
@@ -76,7 +74,7 @@ def get_result(match_id: int, current_user: User = Depends(get_current_user), db
         "match_id": match.id, "summary": "Ringkasan tersedia.",
         "top_recommendation": {"career_title": top.get("title", ""), "score": top.get("score", 0), "label": top.get("label", ""), "reason": top.get("reason", "")},
         "exploration": {"career_title": alt.get("title", ""), "score": alt.get("score", 0), "label": alt.get("label", ""), "reason": alt.get("reason", "")},
-        "risk_note": "", "is_paid_unlocked": bool(paid)
+        "risk_note": "", "results": results
     }
 
 @router.get("/experiments")

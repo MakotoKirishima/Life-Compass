@@ -2,9 +2,8 @@ import { useState } from "react";
 
 const FAQS = [
   { q: "Apa itu Life Compass?", a: "Life Compass adalah alat bantu keputusan karir yang membantu kamu menemukan arah karir melalui discovery terstruktur, rekomendasi personal, dan rencana eksperimen 7 hari." },
-  { q: "Apakah gratis?", a: "Ya! Direction Snapshot (rekomendasi awal + rencana 7 hari) GRATIS. Kamu bisa upgrade ke Full Compass Report dengan Rp25.000 sekali bayar." },
+  { q: "Apakah gratis?", a: "Ya! Life Compass 100% gratis. Semua fitur bisa diakses tanpa biaya." },
   { q: "Berapa lama prosesnya?", a: "Discovery Journey hanya butuh 8-12 menit. Setelah itu kamu langsung dapat hasilnya." },
-  { q: "Bagaimana cara bayar?", a: "Pembayaran melalui Mayar.id. Kamu bisa bayar pakai QRIS, Virtual Account, atau Transfer Bank. Rp25.000 sekali bayar, akses seumur hidup." },
   { q: "Data saya aman?", a: "Data kamu dienkripsi, tidak dijual ke pihak ketiga, dan AI tidak dilatih dari data kamu. Kamu bisa hapus akun kapan saja." },
   { q: "Apa bedanya dengan ChatGPT?", a: "Life Compass menggunakan discovery terstruktur 7 bagian + database 80+ karir Indonesia. Hasilnya lebih akurat dan relevan untuk pasar Indonesia." },
   { q: "Bisa dipakai di HP?", a: "Bisa! Life Compass mobile-friendly dan bisa diakses dari browser HP mana pun." },

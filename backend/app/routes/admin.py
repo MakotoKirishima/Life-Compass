@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
-from app.models import User, CareerMatch, Payment, UserEntitlement, Career, LandingContent, Testimonial, AdminSetting
+from app.models import User, CareerMatch, Career, LandingContent, Testimonial, AdminSetting
 from app.auth import get_admin_user
 from app.config import settings
 from app.gemini import GEMINI_AVAILABLE
@@ -15,16 +15,14 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 def get_stats(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
     total_users = db.query(User).filter(User.deleted_at.is_(None)).count()
     completed = db.query(CareerMatch).distinct(CareerMatch.user_id).count()
-    payments = db.query(Payment).filter(Payment.status == "completed").all()
-    return {"total_users": total_users, "completed_discovery": completed, "total_payments": len(payments), "revenue": sum(p.amount for p in payments)}
+    return {"total_users": total_users, "completed_discovery": completed}
 
 @router.get("/users")
 def list_users(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
     users = db.query(User).filter(User.deleted_at.is_(None)).order_by(User.created_at.desc()).all()
     result = []
     for u in users:
-        paid = db.query(UserEntitlement).filter(UserEntitlement.user_id == u.id, UserEntitlement.status == "active").first()
-        result.append({"id": u.id, "email": u.email, "display_name": u.display_name, "created_at": str(u.created_at), "has_paid": bool(paid)})
+        result.append({"id": u.id, "email": u.email, "display_name": u.display_name, "created_at": str(u.created_at)})
     return result
 
 @router.get("/users/{user_id}")
@@ -32,20 +30,12 @@ def get_user_detail(user_id: int, admin: User = Depends(get_admin_user), db: Ses
     u = db.query(User).filter(User.id == user_id).first()
     if not u:
         return {"error": "Not found"}, 404
-    paid = db.query(UserEntitlement).filter(UserEntitlement.user_id == u.id, UserEntitlement.status == "active").first()
     discoveries = db.query(CareerMatch).filter(CareerMatch.user_id == u.id).count()
-    payments = db.query(Payment).filter(Payment.user_id == u.id).order_by(Payment.created_at.desc()).all()
     return {
         "id": u.id, "email": u.email, "display_name": u.display_name,
         "auth_provider": u.auth_provider, "created_at": str(u.created_at),
-        "has_paid": bool(paid), "discovery_count": discoveries,
-        "payments": [{"id": p.id, "amount": p.amount, "status": p.status, "created_at": str(p.created_at)} for p in payments]
+        "discovery_count": discoveries
     }
-
-@router.get("/payments")
-def list_payments(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
-    payments = db.query(Payment).order_by(Payment.created_at.desc()).all()
-    return [{"id": p.id, "user_id": p.user_id, "amount": p.amount, "status": p.status, "product_type": p.product_type, "created_at": str(p.created_at)} for p in payments]
 
 @router.put("/landing-page")
 def update_landing_page(data: dict, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
@@ -53,7 +43,7 @@ def update_landing_page(data: dict, admin: User = Depends(get_admin_user), db: S
     if not lc:
         lc = LandingContent()
         db.add(lc)
-    for key in ["hero_title", "hero_subtitle", "cta_text", "price"]:
+    for key in ["hero_title", "hero_subtitle", "cta_text"]:
         if key in data:
             setattr(lc, key, data[key])
     if "testimonials" in data and isinstance(data["testimonials"], list):
@@ -68,8 +58,8 @@ def get_landing_page(db: Session = Depends(get_db)):
     lc = db.query(LandingContent).first()
     testimonials = db.query(Testimonial).order_by(Testimonial.sort_order).all()
     if not lc:
-        return {"hero_title": "Temukan Arah Karirmu", "hero_subtitle": "Free Direction Map dalam 10 menit", "cta_text": "Mulai Sekarang", "price": 25000, "testimonials": [{"name": t.name, "text": t.text, "role": t.role} for t in testimonials]}
-    return {"hero_title": lc.hero_title, "hero_subtitle": lc.hero_subtitle, "cta_text": lc.cta_text, "price": lc.price, "testimonials": [{"name": t.name, "text": t.text, "role": t.role} for t in testimonials]}
+        return {"hero_title": "Temukan Arah Karirmu", "hero_subtitle": "Direction Map dalam 10 menit", "cta_text": "Mulai Sekarang", "testimonials": [{"name": t.name, "text": t.text, "role": t.role} for t in testimonials]}
+    return {"hero_title": lc.hero_title, "hero_subtitle": lc.hero_subtitle, "cta_text": lc.cta_text, "testimonials": [{"name": t.name, "text": t.text, "role": t.role} for t in testimonials]}
 
 @router.get("/careers")
 def admin_list_careers(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
@@ -148,22 +138,6 @@ def get_settings(admin: User = Depends(get_admin_user), db: Session = Depends(ge
         "career_data_version": settings.CAREER_DATA_VERSION,
         "announcement": announcement.value if announcement else ""
     }
-
-@router.post("/payments/manual-unlock")
-def manual_unlock(data: dict, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
-    user_id = data.get("user_id")
-    product_type = data.get("product_type", "full_report")
-    if not user_id:
-        return {"error": "user_id required"}, 400
-    existing = db.query(UserEntitlement).filter(
-        UserEntitlement.user_id == user_id,
-        UserEntitlement.product_type == product_type,
-        UserEntitlement.status == "active"
-    ).first()
-    if not existing:
-        db.add(UserEntitlement(user_id=user_id, product_type=product_type, status="active"))
-        db.commit()
-    return {"message": f"Unlocked {product_type} for user {user_id}"}
 
 @router.put("/settings")
 def update_settings(data: dict, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):

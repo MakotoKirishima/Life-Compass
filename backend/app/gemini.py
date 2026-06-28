@@ -274,8 +274,7 @@ def chat_response(question: str) -> str:
 
     system_prompt = """Kamu adalah asisten resmi Life Compass. Tugasmu hanya menjawab pertanyaan seputar:
 - Cara menggunakan Life Compass
-- Fitur gratis vs berbayar (Free Snapshot gratis, Full Report Rp25.000)
-- Cara pembayaran (Mayar.id, Rp25.000 sekali bayar, akses seumur hidup)
+- Fitur gratis (semua fitur gratis, tidak ada biaya)
 - Cara baca hasil rekomendasi
 - Kebijakan privasi
 - Cara hapus akun
@@ -291,10 +290,8 @@ Gunakan Bahasa Indonesia yang ramah."""
 
 def _fallback_chat(question: str) -> str:
     q = question.lower()
-    if "gratis" in q or "free" in q:
-        return "Direction Snapshot GRATIS. Full Report Rp25.000."
-    if "bayar" in q or "harga" in q or "rp" in q:
-        return "Full Report Rp25.000 via Mayar.id (QRIS/VA/Transfer)."
+    if "gratis" in q or "free" in q or "bayar" in q or "harga" in q or "rp" in q:
+        return "Life Compass 100% gratis. Semua fitur bisa diakses tanpa biaya."
     if "cara" in q or "pakai" in q:
         return "1. Daftar 2. Isi discovery 3. Dapat hasil 4. Upgrade jika mau."
     if "beda" in q or "chatgpt" in q:

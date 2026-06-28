@@ -81,7 +81,6 @@ class SnapshotOut(BaseModel):
     exploration: CareerMatchOut
     risk_note: str
     experiment_plan: List[str]
-    is_paid_unlocked: bool = False
 
 class ExperimentPlanOut(BaseModel):
     id: int
@@ -97,28 +96,15 @@ class ExperimentTaskUpdate(BaseModel):
     done: bool
     note: Optional[str] = None
 
-class PaymentCreateResponse(BaseModel):
-    payment_id: int
-    amount: int
-    checkout_url: str
-    status: str
-
-class PaymentStatusResponse(BaseModel):
-    has_access: bool
-    product: Optional[str] = None
-
 class AdminStats(BaseModel):
     total_users: int
     completed_discovery: int
-    total_payments: int
-    revenue: int
 
 class AdminUserOut(BaseModel):
     id: int
     email: Optional[str] = None
     display_name: Optional[str] = None
     created_at: str
-    has_paid: bool = False
 
 class AdminUserDetail(BaseModel):
     id: int
@@ -126,17 +112,7 @@ class AdminUserDetail(BaseModel):
     display_name: Optional[str] = None
     auth_provider: str = ""
     created_at: str
-    has_paid: bool = False
     discovery_count: int = 0
-    payments: list = []
-
-class AdminPaymentOut(BaseModel):
-    id: int
-    user_id: int
-    amount: int
-    status: str
-    product_type: str
-    created_at: str
 
 class ChatRequest(BaseModel):
     question: str
@@ -178,6 +154,4 @@ class AdminSettingsOut(BaseModel):
     class Config:
         from_attributes = True
 
-class ManualUnlockRequest(BaseModel):
-    user_id: int
-    product_type: str = "full_report"
+

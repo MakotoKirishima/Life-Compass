@@ -92,7 +92,7 @@ class Payment(Base):
     __tablename__ = "payments"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, index=True)
-    provider = Column(String, default="mayar")
+    provider = Column(String, default="free")
     external_reference = Column(String, unique=True, nullable=True)
     amount = Column(Integer)
     currency = Column(String, default="IDR")
