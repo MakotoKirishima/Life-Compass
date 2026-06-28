@@ -171,13 +171,6 @@ Or with remote URL:
 | GET | /api/discovery/experiments | Get experiment plans |
 | PUT | /api/discovery/experiments/{plan_id}/tasks/{task_index} | Update task status |
 
-### Payment
-
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | /api/payment/create | Create Mayar checkout |
-| POST | /api/payment/webhook | Mayar webhook |
-| GET | /api/payment/status | Check payment status |
 
 ### Chat (Authenticated)
 
@@ -199,8 +192,6 @@ Or with remote URL:
 | GET | /api/admin/stats | Dashboard statistics |
 | GET | /api/admin/users | List all users |
 | GET | /api/admin/users/{id} | Get user detail |
-| GET | /api/admin/payments | List payments |
-| POST | /api/admin/payments/manual-unlock | Unlock product manually |
 | GET | /api/admin/careers | List careers |
 | POST | /api/admin/careers | Create career |
 | PUT | /api/admin/careers/{id} | Update career |

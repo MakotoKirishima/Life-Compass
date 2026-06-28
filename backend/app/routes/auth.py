@@ -129,17 +129,15 @@ def delete_account(current_user: User = Depends(get_current_user), db: Session =
 
 @router.get("/export")
 def export_data(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    from app.models import UserProfile, CareerMatch, ExperimentPlan, Payment, ChatLog
+    from app.models import UserProfile, CareerMatch, ExperimentPlan, ChatLog
     profiles = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).all()
     matches = db.query(CareerMatch).filter(CareerMatch.user_id == current_user.id).all()
     plans = db.query(ExperimentPlan).filter(ExperimentPlan.user_id == current_user.id).all()
-    payments = db.query(Payment).filter(Payment.user_id == current_user.id).all()
     chats = db.query(ChatLog).filter(ChatLog.user_id == current_user.id).all()
     return {
         "user": {"id": current_user.id, "email": current_user.email, "display_name": current_user.display_name, "created_at": str(current_user.created_at)},
         "profiles": [{"stage": p.stage, "interests": p.interests, "skills": p.skills, "created_at": str(p.created_at)} for p in profiles],
         "matches": [{"id": m.id, "created_at": str(m.created_at)} for m in matches],
         "experiment_plans": [{"career_title": p.career_title, "tasks": p.tasks, "status": p.status} for p in plans],
-        "payments": [{"amount": p.amount, "status": p.status, "product_type": p.product_type} for p in payments],
         "chat_logs": [{"question": c.question[:100], "created_at": str(c.created_at)} for c in chats],
     }

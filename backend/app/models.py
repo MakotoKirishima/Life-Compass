@@ -88,18 +88,6 @@ class ExperimentTaskStatus(Base):
     note = Column(Text, nullable=True)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
-class Payment(Base):
-    __tablename__ = "payments"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, index=True)
-    provider = Column(String, default="free")
-    external_reference = Column(String, unique=True, nullable=True)
-    amount = Column(Integer)
-    currency = Column(String, default="IDR")
-    status = Column(String, default="pending")
-    product_type = Column(String, default="full_report")
-    raw_webhook = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 class UserEntitlement(Base):
     __tablename__ = "user_entitlements"

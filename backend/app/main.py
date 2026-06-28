@@ -78,10 +78,6 @@ app.include_router(discovery.router)
 app.include_router(career.router)
 app.include_router(admin.router)
 app.include_router(chatbot.router)
-
-from app.routes import payment
-app.include_router(payment.router)
-
 @app.get("/api/health")
 def health():
     return {"status": "ok", "version": "1.0.0", "gemini_available": bool(settings.GEMINI_API_KEY)}
