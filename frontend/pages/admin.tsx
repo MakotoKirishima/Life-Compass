@@ -115,13 +115,13 @@ export default function Admin({ user, api }) {
               />
               <button onClick={async () => {
                 if (!aiHelp) return;
-                const res = await fetch(`${api}/api/admin/career/generate`, {
+                const res = await fetch(`${api}/api/admin/careers/generate`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json", Authorization: `Bearer ${user.token}` },
                   body: JSON.stringify({ title: aiHelp, category: "Umum", keywords: aiHelp }),
                 });
                 const data = await res.json();
-                const createRes = await fetch(`${api}/api/careers/admin`, {
+                const createRes = await fetch(`${api}/api/admin/careers`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json", Authorization: `Bearer ${user.token}` },
                   body: JSON.stringify({ title: aiHelp, category: "Umum", ...data }),

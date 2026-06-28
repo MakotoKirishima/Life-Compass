@@ -1,5 +1,7 @@
 import "../styles/globals.css";
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+const ChatBot = dynamic(() => import("../components/ChatBot"), { ssr: false });
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -14,7 +16,12 @@ function MyApp({ Component, pageProps }) {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split(".")[1]));
-        setUser({ id: payload.user_id, token });
+        setUser({
+          id: payload.sub || payload.user_id,
+          email: payload.email || "",
+          display_name: payload.display_name || "",
+          token,
+        });
       } catch (e) {
         localStorage.removeItem("token");
       }
@@ -27,7 +34,16 @@ function MyApp({ Component, pageProps }) {
     setUser({ ...userData, token });
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        await fetch(`${API}/api/auth/logout`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (_) {}
+    }
     localStorage.removeItem("token");
     setUser(null);
   };
@@ -44,7 +60,12 @@ function MyApp({ Component, pageProps }) {
     );
   }
 
-  return <Component {...pageProps} user={user} login={login} logout={logout} api={API} />;
+  return (
+    <>
+      <Component {...pageProps} user={user} login={login} logout={logout} api={API} />
+      {user && <ChatBot token={user.token} />}
+    </>
+  );
 }
 
 export default MyApp;

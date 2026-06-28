@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import Column, Integer, String, Text, Float, DateTime, Boolean, JSON
+from sqlalchemy import Column, Integer, String, Text, Float, DateTime, Boolean, JSON, ForeignKey
 from app.database import Base
 
 class User(Base):
@@ -8,9 +8,19 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=True)
     google_id = Column(String, unique=True, nullable=True)
     display_name = Column(String, nullable=True)
-    auth_provider = Column(String, default="google")
+    password_hash = Column(String, nullable=True)
+    auth_provider = Column(String, default="email")
+    role = Column(String, default="user")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     deleted_at = Column(DateTime, nullable=True)
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, index=True)
+    token_hash = Column(String, unique=True, index=True)
+    expires_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 class UserProfile(Base):
     __tablename__ = "user_profiles"
@@ -69,6 +79,15 @@ class ExperimentPlan(Base):
     completion_rate = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+class ExperimentTaskStatus(Base):
+    __tablename__ = "experiment_task_status"
+    id = Column(Integer, primary_key=True, index=True)
+    plan_id = Column(Integer)
+    task_index = Column(Integer)
+    done = Column(Boolean, default=False)
+    note = Column(Text, nullable=True)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
 class Payment(Base):
     __tablename__ = "payments"
     id = Column(Integer, primary_key=True, index=True)
@@ -79,6 +98,7 @@ class Payment(Base):
     currency = Column(String, default="IDR")
     status = Column(String, default="pending")
     product_type = Column(String, default="full_report")
+    raw_webhook = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 class UserEntitlement(Base):
@@ -104,3 +124,28 @@ class ChatLog(Base):
     question = Column(Text)
     answer = Column(Text)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class LandingContent(Base):
+    __tablename__ = "landing_content"
+    id = Column(Integer, primary_key=True, index=True)
+    hero_title = Column(String, default="")
+    hero_subtitle = Column(String, default="")
+    cta_text = Column(String, default="")
+    price = Column(Integer, default=25000)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+class Testimonial(Base):
+    __tablename__ = "testimonials"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    text = Column(Text)
+    role = Column(String, nullable=True)
+    sort_order = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class AdminSetting(Base):
+    __tablename__ = "admin_settings"
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String, unique=True, index=True)
+    value = Column(Text)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)

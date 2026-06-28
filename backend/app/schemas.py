@@ -1,15 +1,25 @@
-from pydantic import BaseModel
-from typing import Optional, List
+from pydantic import BaseModel, EmailStr
+from typing import Optional, List, Any
 from datetime import datetime
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    display_name: Optional[str] = None
 
 class LoginRequest(BaseModel):
     email: Optional[str] = None
+    password: Optional[str] = None
     google_token: Optional[str] = None
 
 class TokenResponse(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
     user_id: int
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
 
 class DiscoveryInput(BaseModel):
     stage: str
@@ -19,7 +29,7 @@ class DiscoveryInput(BaseModel):
     work_values: List[str] = []
     skills: List[str] = []
     constraints: List[str] = []
-    work_preferences: dict = {}
+    work_preferences: list = []
     reflection: Optional[str] = None
 
 class CareerOut(BaseModel):
@@ -35,11 +45,30 @@ class CareerOut(BaseModel):
     salary_max: Optional[str] = None
     market_prospect: str = "Sedang"
     ai_risk: str = "Sedang"
+    entry_barriers: List[str] = []
+    source_notes: list = []
+    status: str = "draft"
+    last_reviewed_at: Optional[str] = None
     class Config:
         from_attributes = True
 
+class CareerCreate(BaseModel):
+    title: str
+    category: str
+    description: Optional[str] = None
+    common_tasks: List[str] = []
+    required_skills: List[str] = []
+    optional_skills: List[str] = []
+    education_paths: List[str] = []
+    salary_min: Optional[str] = None
+    salary_max: Optional[str] = None
+    market_prospect: str = "Sedang"
+    ai_risk: str = "Sedang"
+    entry_barriers: List[str] = []
+    source_notes: list = []
+    status: str = "draft"
+
 class CareerMatchOut(BaseModel):
-    id: int
     career_title: str
     score: float
     label: str
@@ -54,19 +83,29 @@ class SnapshotOut(BaseModel):
     experiment_plan: List[str]
     is_paid_unlocked: bool = False
 
-class FullReportOut(BaseModel):
-    recommendations: List[CareerMatchOut]
-    skill_gap: dict
-    roadmap: List[str]
-    family_script: str
-    pdf_url: Optional[str] = None
-
-class AdminUserOut(BaseModel):
+class ExperimentPlanOut(BaseModel):
     id: int
-    email: Optional[str] = None
-    display_name: Optional[str] = None
-    created_at: datetime
-    has_paid: bool = False
+    match_id: int
+    career_title: str
+    tasks: list
+    task_status: List[dict] = []
+    status: str
+    completion_rate: float
+    created_at: str
+
+class ExperimentTaskUpdate(BaseModel):
+    done: bool
+    note: Optional[str] = None
+
+class PaymentCreateResponse(BaseModel):
+    payment_id: int
+    amount: int
+    checkout_url: str
+    status: str
+
+class PaymentStatusResponse(BaseModel):
+    has_access: bool
+    product: Optional[str] = None
 
 class AdminStats(BaseModel):
     total_users: int
@@ -74,8 +113,71 @@ class AdminStats(BaseModel):
     total_payments: int
     revenue: int
 
+class AdminUserOut(BaseModel):
+    id: int
+    email: Optional[str] = None
+    display_name: Optional[str] = None
+    created_at: str
+    has_paid: bool = False
+
+class AdminUserDetail(BaseModel):
+    id: int
+    email: Optional[str] = None
+    display_name: Optional[str] = None
+    auth_provider: str = ""
+    created_at: str
+    has_paid: bool = False
+    discovery_count: int = 0
+    payments: list = []
+
+class AdminPaymentOut(BaseModel):
+    id: int
+    user_id: int
+    amount: int
+    status: str
+    product_type: str
+    created_at: str
+
 class ChatRequest(BaseModel):
     question: str
 
 class ChatResponse(BaseModel):
     answer: str
+
+class ProfileUpdate(BaseModel):
+    display_name: Optional[str] = None
+    stage: Optional[str] = None
+    education_level: Optional[str] = None
+    location: Optional[str] = None
+    interests: Optional[List[str]] = None
+    work_values: Optional[List[str]] = None
+    skills: Optional[List[str]] = None
+    constraints: Optional[List[str]] = None
+    work_preferences: Optional[dict] = None
+    reflection: Optional[str] = None
+
+class LandingContentOut(BaseModel):
+    hero_title: str
+    hero_subtitle: str
+    cta_text: str
+    price: int
+    testimonials: list = []
+
+class LandingContentUpdate(BaseModel):
+    hero_title: Optional[str] = None
+    hero_subtitle: Optional[str] = None
+    cta_text: Optional[str] = None
+    price: Optional[int] = None
+
+class AdminSettingsOut(BaseModel):
+    gemini_available: bool
+    gemini_key_set: bool
+    r2_backup_enabled: bool
+    career_data_version: int
+    announcement: str = ""
+    class Config:
+        from_attributes = True
+
+class ManualUnlockRequest(BaseModel):
+    user_id: int
+    product_type: str = "full_report"

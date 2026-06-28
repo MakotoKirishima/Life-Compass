@@ -47,7 +47,7 @@ def score_careers(profile_data: dict, db: Session) -> list[dict]:
         return []
 
     cache_key = hashlib.md5(
-        (json.dumps(profile_data, sort_keys=True) + "_v1").encode()
+        (json.dumps(profile_data, sort_keys=True) + f"_v{settings.CAREER_DATA_VERSION}").encode()
     ).hexdigest()
 
     cached = _get_cache(cache_key, db)
@@ -137,14 +137,14 @@ def _fallback_scoring(profile_data: dict, careers: list, db: Session) -> list[di
 
     results.sort(key=lambda x: x["score"], reverse=True)
     cache_key = hashlib.md5(
-        (json.dumps(profile_data, sort_keys=True) + "_v1").encode()
+        (json.dumps(profile_data, sort_keys=True) + f"_v{settings.CAREER_DATA_VERSION}").encode()
     ).hexdigest()
     _set_cache(cache_key, {"results": results, "cache_key": cache_key}, db)
     return results
 
 def generate_summary(profile_data: dict) -> str:
     if not GEMINI_AVAILABLE:
-        return generate_fallback_summary(profile_data)
+        return _fallback_summary(profile_data)
 
     prompt = f"""Buat ringkasan profil karir 2-3 paragraf dalam Bahasa Indonesia dari data berikut:
 {json.dumps(profile_data, ensure_ascii=False, indent=2)}
@@ -153,9 +153,9 @@ Fokus: minat, nilai kerja, skill, dan kendala user. Bahasa Indonesia yang ramah.
     result = _call_gemini(prompt)
     if result:
         return result
-    return generate_fallback_summary(profile_data)
+    return _fallback_summary(profile_data)
 
-def generate_fallback_summary(profile_data: dict) -> str:
+def _fallback_summary(profile_data: dict) -> str:
     interests = profile_data.get("interests", [])
     skills = profile_data.get("skills", [])
     values = profile_data.get("work_values", [])
@@ -171,15 +171,7 @@ def generate_fallback_summary(profile_data: dict) -> str:
 
 def generate_experiment_plan(career_title: str, profile_data: dict) -> list[str]:
     if not GEMINI_AVAILABLE:
-        return [
-            f"Hari 1: Cari 3 lowongan {career_title} dan catat skill yang diminta",
-            f"Hari 2: Tonton 1 video tentang keseharian {career_title}",
-            f"Hari 3: Coba 1 mini-project sederhana di bidang ini",
-            f"Hari 4: Hubungi 1 orang yang bekerja sebagai {career_title}",
-            f"Hari 5: Baca artikel tentang perkembangan karir ini",
-            f"Hari 6: Bandingkan 2 jalur pendidikan untuk masuk ke bidang ini",
-            f"Hari 7: Diskusikan dengan teman/keluarga tentang apa yang kamu pelajari"
-        ]
+        return _fallback_plan(career_title)
 
     prompt = f"""Buat rencana eksperimen 7 hari untuk karir "{career_title}" dalam Bahasa Indonesia. Profil user:
 {json.dumps(profile_data, ensure_ascii=False, indent=2)}
@@ -196,6 +188,9 @@ Output: JSON array of 7 string tasks. Tugas harus konkret, murah, dan bisa dilak
             return json.loads(cleaned.strip())
         except (json.JSONDecodeError, IndexError):
             pass
+    return _fallback_plan(career_title)
+
+def _fallback_plan(career_title: str) -> list[str]:
     return [
         f"Hari 1: Cari 3 lowongan {career_title} dan catat skill yang diminta",
         f"Hari 2: Tonton 1 video tentang keseharian {career_title}",
@@ -206,37 +201,104 @@ Output: JSON array of 7 string tasks. Tugas harus konkret, murah, dan bisa dilak
         f"Hari 7: Diskusikan dengan teman/keluarga tentang apa yang kamu pelajari"
     ]
 
+def generate_roadmap(career_title: str, profile_data: dict) -> list[str]:
+    if not GEMINI_AVAILABLE:
+        return _fallback_roadmap(career_title)
+    prompt = f"""Buat rencana 30 hari untuk karir "{career_title}" dalam Bahasa Indonesia.
+Output: JSON array of 4 tasks (minggu 1-4). Tugas harus konkret."""
+    result = _call_gemini(prompt)
+    if result:
+        try:
+            cleaned = result.strip()
+            if cleaned.startswith("```json"):
+                cleaned = cleaned.split("```json")[1].split("```")[0]
+            elif cleaned.startswith("```"):
+                cleaned = cleaned.split("```")[1].split("```")[0]
+            return json.loads(cleaned.strip())
+        except Exception:
+            pass
+    return _fallback_roadmap(career_title)
+
+def _fallback_roadmap(career_title: str) -> list[str]:
+    return [
+        f"Minggu 1: Pelajari dasar-dasar {career_title}",
+        f"Minggu 2: Praktikkan skill dengan proyek kecil",
+        f"Minggu 3: Bangun portofolio dan jaringan",
+        f"Minggu 4: Apply ke lowongan entry-level"
+    ]
+
+def generate_skill_gap(career_title: str, user_skills: list[str], career_skills: list[str]) -> dict:
+    if not GEMINI_AVAILABLE:
+        return _fallback_skill_gap(user_skills, career_skills)
+    prompt = f"""Analisis skill gap untuk karir {career_title}.
+Skill user: {json.dumps(user_skills)}
+Skill dibutuhkan: {json.dumps(career_skills)}
+Output JSON: {{"matched": [str], "missing": [str], "recommendations": [str]}}"""
+    result = _call_gemini(prompt)
+    if result:
+        try:
+            cleaned = result.strip()
+            if cleaned.startswith("```json"):
+                cleaned = cleaned.split("```json")[1].split("```")[0]
+            elif cleaned.startswith("```"):
+                cleaned = cleaned.split("```")[1].split("```")[0]
+            return json.loads(cleaned.strip())
+        except Exception:
+            pass
+    return _fallback_skill_gap(user_skills, career_skills)
+
+def _fallback_skill_gap(user_skills: list[str], career_skills: list[str]) -> dict:
+    user_set = set(s.lower() for s in user_skills)
+    career_set = set(s.lower() for s in career_skills)
+    matched = list(user_set & career_set)
+    missing = list(career_set - user_set)
+    return {
+        "matched": [s for s in career_skills if s.lower() in user_set],
+        "missing": [s for s in career_skills if s.lower() not in user_set],
+        "recommendations": [f"Pelajari: {s}" for s in missing[:3]]
+    }
+
 def generate_family_script(career_title: str, profile_data: dict, reason: str) -> str:
     if not GEMINI_AVAILABLE:
-        return f"Ibu/Ayah, setelah mengikuti tes karir di Life Compass, aku dapat rekomendasi untuk menjadi {career_title}. Ini cocok dengan minat dan keahlianku. Aku ingin menjelaskan kenapa aku memilih jalur ini dan apa rencanaku ke depan."
-
+        return f"Ibu/Ayah, setelah tes karir di Life Compass, aku dapat rekomendasi menjadi {career_title}. Ini cocok dengan minat dan keahlianku. Aku ingin menjelaskan kenapa aku memilih jalur ini dan apa rencanaku ke depan."
     prompt = f"""Buat skrip diskusi keluarga dalam Bahasa Indonesia. User mendapat rekomendasi karir: {career_title}.
 Profil: {json.dumps(profile_data, ensure_ascii=False, indent=2)}
 Alasan: {reason}
-
-Buat poin-poin argumen yang bisa diucapkan user ke orang tua/keluarga untuk menjelaskan pilihan karir ini. 3-5 poin, bahasa santai tapi sopan."""
+Buat poin-poin argumen 3-5 poin, bahasa santai tapi sopan."""
     result = _call_gemini(prompt)
-    return result if result else f"Poin diskusi untuk {career_title}:\n1. Minatku cocok dengan bidang ini\n2. Prospek karirnya menjanjikan\n3. Aku punya rencana belajar yang jelas"
+    return result if result else f"Poin diskusi untuk {career_title}:\n1. Minatku cocok\n2. Prospek menjanjikan\n3. Aku punya rencana"
 
 def chat_response(question: str) -> str:
     if not GEMINI_AVAILABLE:
-        return "Maaf, fitur chat sedang tidak tersedia. Silakan cek halaman FAQ untuk informasi lebih lanjut."
+        return _fallback_chat(question)
 
     system_prompt = """Kamu adalah asisten resmi Life Compass. Tugasmu hanya menjawab pertanyaan seputar:
 - Cara menggunakan Life Compass
 - Fitur gratis vs berbayar (Free Snapshot gratis, Full Report Rp25.000)
 - Cara pembayaran (Mayar.id, Rp25.000 sekali bayar, akses seumur hidup)
 - Cara baca hasil rekomendasi
-- Cara bagikan hasil
 - Kebijakan privasi
 - Cara hapus akun
 
-Jika ditanya di luar topik Life Compass, jawab: "Maaf, saya hanya bisa membantu pertanyaan seputar Life Compass. Silakan cek FAQ atau hubungi support."
-Gunakan bahasa Indonesia yang ramah dan mudah dipahami."""
-
+Jika ditanya di luar topik, jawab: "Maaf, saya hanya bisa membantu pertanyaan seputar Life Compass."
+Gunakan Bahasa Indonesia yang ramah."""
     try:
-        chat_model = __import__("google.generativeai").GenerativeModel("gemini-1.5-flash", system_instruction=system_prompt)
-        resp = chat_model.generate_content(question)
+        chat = model.start_chat(system_instruction=system_prompt)
+        resp = chat.send_message(question)
         return resp.text
     except Exception:
-        return "Maaf, saya sedang tidak bisa menjawab. Silakan coba lagi nanti atau cek FAQ."
+        return _fallback_chat(question)
+
+def _fallback_chat(question: str) -> str:
+    q = question.lower()
+    if "gratis" in q or "free" in q:
+        return "Direction Snapshot GRATIS. Full Report Rp25.000."
+    if "bayar" in q or "harga" in q or "rp" in q:
+        return "Full Report Rp25.000 via Mayar.id (QRIS/VA/Transfer)."
+    if "cara" in q or "pakai" in q:
+        return "1. Daftar 2. Isi discovery 3. Dapat hasil 4. Upgrade jika mau."
+    if "beda" in q or "chatgpt" in q:
+        return "Life Compass pake data 80+ karir Indonesia + discovery terstruktur."
+    if "aman" in q or "data" in q or "privasi" in q:
+        return "Data dienkripsi, tidak dijual, bisa hapus akun kapan saja."
+    return "Maaf, saya hanya bisa membantu seputar Life Compass. Cek FAQ di /faq."

@@ -7,6 +7,7 @@ const DISCOVERY_STEPS = [
   { id: "skills", title: "Keahlian", question: "Skill apa yang kamu miliki?", options: ["Microsoft Office", "Desain Grafis", "Public Speaking", "Menulis", "Analisa Data", "Pemrograman", "Fotografi", "Bahasa Inggris", "Manajemen", "Excel/Spreadsheet", "Video Editing", "Social Media", "Penjualan", "Pelayanan Pelanggan", "Penelitian"] },
   { id: "constraints", title: "Kendala", question: "Apa kendala yang kamu hadapi?", options: ["Biaya Terbatas", "Harus Cepat Dapat Kerja", "Tekanan Orang Tua", "Lokasi Terbatas", "Pendidikan Terbatas", "Tidak Punya Pengalaman", "Waktu Terbatas", "Bingung Pilihan"] },
   { id: "work_preferences", title: "Preferensi Kerja", question: "Pilih yang paling cocok untukmu", options: ["Kerja Sendiri", "Kerja dalam Tim", "Rutin Terjadwal", "Variasi Tugas", "Kantor", "Remote/WFH", "Full-time", "Freelance/Part-time"] },
+  { id: "reflection", title: "Refleksi", question: "Ceritakan sedikit tentang dirimu (opsional)", options: [] },
 ];
 
 export default function Dashboard({ user, api, logout }) {
@@ -50,11 +51,12 @@ export default function Dashboard({ user, api, logout }) {
 
       const profile = {
         stage: answers.stage || "",
+        education_level: answers.education_level || "",
         interests: answers.interests || [],
         work_values: answers.work_values || [],
         skills: answers.skills || [],
         constraints: answers.constraints || [],
-        work_preferences: { selected: answers.work_preferences || [] },
+        work_preferences: answers.work_preferences || [],
       };
 
       fetch(`${api}/api/discovery/submit`, {
@@ -128,6 +130,7 @@ export default function Dashboard({ user, api, logout }) {
         <nav className="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold text-blue-700">Life Compass</h1>
           <div className="flex items-center gap-4">
+            <a href="/experiments" className="text-gray-500 hover:text-gray-700 text-sm">Eksperimen</a>
             <a href="/faq" className="text-gray-500 hover:text-gray-700 text-sm">FAQ</a>
             <button onClick={logout} className="text-red-500 text-sm">Logout</button>
           </div>
@@ -173,8 +176,12 @@ export default function Dashboard({ user, api, logout }) {
                 </div>
 
                 <div className="flex gap-3">
-                  <button onClick={() => alert("Hasil disimpan!")} className="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm">Simpan</button>
-                  <button onClick={() => alert("Link hasil disalin!")} className="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm">Bagikan</button>
+                  <a href={`/result?id=${result.match_id}`} className="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm">Lihat Detail</a>
+                  <button onClick={() => {
+                    const url = `${window.location.origin}/result?id=${result.match_id}`;
+                    navigator.clipboard?.writeText(url);
+                    alert("Link hasil disalin!");
+                  }} className="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm">Bagikan</button>
                   {!showFullReport ? (
                     <button onClick={handleBuyReport} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 text-sm ml-auto font-medium">
                       Buka Laporan Lengkap — Rp25.000
@@ -191,6 +198,13 @@ export default function Dashboard({ user, api, logout }) {
                     <h3 className="font-bold text-lg mb-4">Full Compass Report 🔓</h3>
                     <div className="space-y-4">
                       <p>Berikut 3 rekomendasi karir teratas:</p>
+                      {result.results?.slice(0, 3).map((c, i) => (
+                        <div key={i} className="bg-white p-3 rounded-lg border">
+                          <p className="font-semibold">{c.title}</p>
+                          <p className="text-sm text-gray-600">Skor: {c.score} — {c.label}</p>
+                          <p className="text-sm text-gray-600">{c.reason}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -200,9 +214,9 @@ export default function Dashboard({ user, api, logout }) {
                 <div className="bg-white rounded-xl border p-4">
                   <h3 className="font-semibold mb-3">Riwayat Hasil</h3>
                   {history.map((h) => (
-                    <div key={h.match_id} className="text-sm text-gray-600 py-1">
+                    <a key={h.match_id} href={`/result?id=${h.match_id}`} className="block text-sm text-gray-600 py-2 px-2 hover:bg-gray-50 rounded-lg transition">
                       {h.created_at?.substring(0, 10)} — {h.top_result}
-                    </div>
+                    </a>
                   ))}
                 </div>
               )}
@@ -257,6 +271,40 @@ export default function Dashboard({ user, api, logout }) {
   const currentStep = DISCOVERY_STEPS[step];
   const isMultiSelect = ["interests", "work_values", "skills", "constraints", "work_preferences"].includes(currentStep.id);
   const selected = answers[currentStep.id] || [];
+
+  if (currentStep.id === "reflection") {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <div className="mb-6">
+            <div className="flex gap-1 mb-2">
+              {DISCOVERY_STEPS.map((_, i) => (
+                <div key={i} className={`h-1 flex-1 rounded-full ${i <= step ? "bg-blue-500" : "bg-gray-200"}`}></div>
+              ))}
+            </div>
+            <p className="text-sm text-gray-400">Langkah {step + 1} dari {DISCOVERY_STEPS.length}</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg border p-6 md:p-8">
+            <h2 className="text-xl font-bold mb-2">{currentStep.title}</h2>
+            <p className="text-gray-500 mb-6">{currentStep.question}</p>
+            <textarea
+              value={answers.reflection || ""}
+              onChange={(e) => setAnswers({ ...answers, reflection: e.target.value })}
+              placeholder="Contoh: Aku lulusan SMK jurusan Multimedia. Aku suka desain tapi juga tertarik dengan programming. Orang tuaku ingin aku jadi PNS..."
+              className="w-full border rounded-xl px-4 py-3 h-40 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+            />
+            <div className="flex justify-between mt-8">
+              <button onClick={() => setStep(step - 1)} className="border border-gray-300 px-6 py-2 rounded-lg hover:bg-gray-50">Kembali</button>
+              <button onClick={() => setStep(step + 1)} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Lewati</button>
+            </div>
+          </div>
+          <div className="mt-4 text-center">
+            <button onClick={handleRestart} className="text-gray-400 text-sm hover:text-gray-600">Batalkan</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

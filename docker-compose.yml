@@ -1,16 +1,17 @@
+version: "3.8"
 services:
   app:
-    build:
-      context: ./backend-node
-      dockerfile: Dockerfile
-    container_name: lifecompass-app
+    build: ./backend
+    container_name: lifecompass-api
     restart: unless-stopped
     ports:
-      - "8000:8000"
-    env_file:
-      - ./backend-node/.env
+      - "127.0.0.1:8000:8000"
+    env_file: ./backend/.env
     volumes:
-      - lifecompass-data:/app/data
-
-volumes:
-  lifecompass-data:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

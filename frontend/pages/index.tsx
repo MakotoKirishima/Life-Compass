@@ -112,9 +112,11 @@ export default function Landing({ user, logout, api }) {
         <div className="mt-2 space-x-4">
           <a href="/faq" className="hover:text-gray-600">FAQ</a>
           <span>·</span>
-          <span>Kebijakan Privasi</span>
+          <a href="/privacy" className="hover:text-gray-600">Kebijakan Privasi</a>
           <span>·</span>
-          <span>Syarat Ketentuan</span>
+          <a href="/terms" className="hover:text-gray-600">Syarat Ketentuan</a>
+          <span>·</span>
+          <a href="/disclaimer" className="hover:text-gray-600">Disclaimer</a>
         </div>
       </footer>
 

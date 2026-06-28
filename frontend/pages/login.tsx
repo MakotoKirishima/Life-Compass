@@ -2,6 +2,7 @@ import { useState } from "react";
 
 export default function Login({ login, api, user }) {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -19,7 +20,7 @@ export default function Login({ login, api, user }) {
     })
       .then((r) => r.json())
       .then((data) => {
-        login(data.access_token, { id: data.user_id });
+        login(data.access_token, { id: data.user_id, email: data.email, display_name: data.display_name });
         window.location.href = "/dashboard";
       })
       .catch(() => setError("Gagal login. Coba lagi."))
@@ -28,16 +29,26 @@ export default function Login({ login, api, user }) {
 
   const handleEmailLogin = (e) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email || !password) return;
     setLoading(true);
     fetch(`${api}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, password }),
     })
-      .then((r) => r.json())
-      .then((data) => {
-        login(data.access_token, { id: data.user_id });
+      .then((r) => r.json().then((d) => ({ status: r.status, body: d })))
+      .then(({ status, body }) => {
+        if (status === 401) {
+          return fetch(`${api}/api/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password, display_name: email.split("@")[0] }),
+          }).then((r) => r.json().then((d) => ({ status: r.status, body: d })));
+        }
+        return { status, body };
+      })
+      .then(({ body }) => {
+        login(body.access_token, { id: body.user_id, email: body.email, display_name: body.display_name });
         window.location.href = "/dashboard";
       })
       .catch(() => setError("Gagal login. Coba lagi."))
@@ -74,12 +85,19 @@ export default function Login({ login, api, user }) {
             placeholder="nama@email.com"
             className="w-full border rounded-lg px-4 py-3 mb-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
           />
+          <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <input
+            type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+            placeholder="Minimal 6 karakter"
+            className="w-full border rounded-lg px-4 py-3 mb-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          />
           <button
-            type="submit" disabled={loading || !email}
+            type="submit" disabled={loading || !email || !password}
             className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50"
           >
-            {loading ? "Memproses..." : "Masuk dengan Email"}
+            {loading ? "Memproses..." : "Daftar / Masuk"}
           </button>
+          <p className="text-xs text-gray-400 mt-2 text-center">Belum punya akun? Otomatis terdaftar saat masuk.</p>
         </form>
       </div>
     </div>
