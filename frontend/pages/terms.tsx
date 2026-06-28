@@ -1,19 +1,40 @@
 export default function Terms() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b px-6 py-4"><a href="/" className="text-blue-600 font-bold text-xl">Life Compass</a></nav>
-      <main className="max-w-2xl mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold mb-6">Syarat dan Ketentuan</h1>
-        <div className="prose text-gray-700 space-y-4">
-          <p><strong>1. Layanan</strong><br/>Life Compass adalah alat bantu keputusan karir. Hasil rekomendasi bersifat informatif dan bukan konseling profesional.</p>
-          <p><strong>2. Akun</strong><br/>Pengguna bertanggung jawab atas kerahasiaan akun. Satu akun untuk satu orang.</p>
-          <p><strong>3. Pembayaran</strong><br/>Pembayaran untuk Full Compass Report bersifat sekali bayar, tidak ada langganan berulang. Tidak ada refund setelah akses diberikan.</p>
-          <p><strong>4. Penggunaan Wajar</strong><br/>Dilarang menyalahgunakan sistem, melakukan scraping, atau menggunakan akun untuk tujuan ilegal.</p>
-          <p><strong>5. Batasan Tanggung Jawab</strong><br/>Life Compass tidak bertanggung jawab atas keputusan karir yang diambil berdasarkan rekomendasi. Konsultasikan dengan profesional untuk keputusan penting.</p>
-          <p><strong>6. Penghentian Layanan</strong><br/>Kami berhak menghentikan akses jika melanggar ketentuan. Kami akan memberikan pemberitahuan jika layanan akan dihentikan.</p>
-          <p className="text-sm text-gray-400 mt-8">Terakhir diperbarui: Juni 2026</p>
+      <nav className="bg-white shadow-sm border-b px-6 py-4">
+        <a href="/" className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">Life Compass</a>
+      </nav>
+      <main className="max-w-3xl mx-auto px-4 py-16">
+        <div className="bg-white rounded-2xl shadow-sm border p-8 md:p-10">
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">Syarat dan Ketentuan</h1>
+          <div className="space-y-6 text-gray-700 leading-relaxed">
+            <div>
+              <h2 className="font-semibold text-gray-900 text-lg mb-2">1. Layanan</h2>
+              <p>Life Compass adalah alat bantu keputusan karir. Hasil rekomendasi bersifat informatif dan bukan konseling profesional.</p>
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-900 text-lg mb-2">2. Akun</h2>
+              <p>Pengguna bertanggung jawab atas kerahasiaan akun. Satu akun untuk satu orang.</p>
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-900 text-lg mb-2">3. Penggunaan Wajar</h2>
+              <p>Dilarang menyalahgunakan sistem, melakukan scraping, atau menggunakan akun untuk tujuan ilegal.</p>
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-900 text-lg mb-2">4. Batasan Tanggung Jawab</h2>
+              <p>Life Compass tidak bertanggung jawab atas keputusan karir yang diambil berdasarkan rekomendasi. Konsultasikan dengan profesional untuk keputusan penting.</p>
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-900 text-lg mb-2">5. Penghentian Layanan</h2>
+              <p>Kami berhak menghentikan akses jika melanggar ketentuan. Kami akan memberikan pemberitahuan jika layanan akan dihentikan.</p>
+            </div>
+            <p className="text-sm text-gray-400 pt-4 border-t">Terakhir diperbarui: Juni 2026</p>
+          </div>
+          <a href="/" className="text-blue-600 hover:underline font-medium inline-flex items-center gap-1 mt-8">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+            Kembali ke Beranda
+          </a>
         </div>
-        <a href="/" className="text-blue-600 hover:underline mt-8 inline-block">← Kembali ke Beranda</a>
       </main>
     </div>
   );

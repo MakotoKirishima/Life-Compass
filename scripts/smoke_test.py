@@ -76,10 +76,6 @@ def run():
             if match_id:
                 check(f"Result {match_id}", "GET", f"/api/discovery/result/{match_id}", authed=token)
 
-        # Payment
-        check("Create payment", "POST", "/api/payment/create", authed=token)
-        check("Payment status", "GET", "/api/payment/status", authed=token)
-
         # Chat
         check("Chat", "POST", "/api/chat/", authed=token, data={"question": "Apa itu Life Compass?"})
 

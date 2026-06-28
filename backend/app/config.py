@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_REDIRECT_URI: str = ""
+    COOKIE_DOMAIN: str = ""
     GEMINI_API_KEY: str = ""
     ADMIN_EMAILS: str = ""
     INITIAL_ADMIN_EMAIL: str = ""

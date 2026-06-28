@@ -141,17 +141,4 @@ def decrypt_reflection(token: str) -> str | None:
     except Exception:
         return None
 
-def verify_google_token(token: str) -> dict | None:
-    if not settings.GOOGLE_CLIENT_ID:
-        return None
-    import httpx
-    try:
-        resp = httpx.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={token}", timeout=10)
-        if resp.status_code != 200:
-            return None
-        payload = resp.json()
-        if payload.get("aud") != settings.GOOGLE_CLIENT_ID:
-            return None
-        return payload
-    except Exception:
-        return None
+

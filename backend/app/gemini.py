@@ -293,7 +293,7 @@ def _fallback_chat(question: str) -> str:
     if "gratis" in q or "free" in q or "bayar" in q or "harga" in q or "rp" in q:
         return "Life Compass 100% gratis. Semua fitur bisa diakses tanpa biaya."
     if "cara" in q or "pakai" in q:
-        return "1. Daftar 2. Isi discovery 3. Dapat hasil 4. Upgrade jika mau."
+        return "1. Daftar 2. Isi discovery 3. Dapat hasil 4. Eksplorasi laporan lengkap."
     if "beda" in q or "chatgpt" in q:
         return "Life Compass pake data 80+ karir Indonesia + discovery terstruktur."
     if "aman" in q or "data" in q or "privasi" in q:

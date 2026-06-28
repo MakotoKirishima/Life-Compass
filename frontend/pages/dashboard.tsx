@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import LockModal from "../components/LockModal";
 
 const DISCOVERY_STEPS = [
   { id: "stage", title: "Situasi Kamu", question: "Apa situasi kamu saat ini?", options: ["Pelajar", "Mahasiswa", "Fresh Graduate", "Sudah Bekerja", "Pindah Karir"] },
@@ -19,6 +20,7 @@ export default function Dashboard({ user, api, logout }) {
   const [loadingText, setLoadingText] = useState("");
   const [trivia, setTrivia] = useState("");
   const [error, setError] = useState("");
+  const [showLock, setShowLock] = useState(false);
 
   const triviaList = [
     "UI/UX Designer masuk 10 besar karir dengan pertumbuhan tercepat di Indonesia!",
@@ -29,7 +31,7 @@ export default function Dashboard({ user, api, logout }) {
   ];
 
   useEffect(() => {
-    if (!user) { window.location.href = "/login"; return; }
+    if (!user) { setShowLock(true); return; }
     fetch(`${api}/api/discovery/history`, {
       headers: { Authorization: `Bearer ${user.token}` },
     }).then(r => r.json()).then(setHistory).catch(() => {});
@@ -94,40 +96,42 @@ export default function Dashboard({ user, api, logout }) {
     window.location.href = "/dashboard";
   };
 
-  if (!user) return null;
+  if (!user) {
+    return <LockModal show={showLock} />;
+  }
 
   if (step === -1) {
     return (
       <div className="min-h-screen bg-gray-50">
         <nav className="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-blue-700">Life Compass</h1>
+          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">Life Compass</h1>
           <div className="flex items-center gap-4">
-            <a href="/experiments" className="text-gray-500 hover:text-gray-700 text-sm">Eksperimen</a>
-            <a href="/faq" className="text-gray-500 hover:text-gray-700 text-sm">FAQ</a>
-            <button onClick={logout} className="text-red-500 text-sm">Logout</button>
+            <a href="/experiments" className="text-gray-500 hover:text-gray-700 text-sm font-medium">Eksperimen</a>
+            <a href="/faq" className="text-gray-500 hover:text-gray-700 text-sm font-medium">FAQ</a>
+            <button onClick={logout} className="text-red-500 text-sm font-medium hover:text-red-600">Logout</button>
           </div>
         </nav>
 
         <main className="max-w-3xl mx-auto px-4 py-12">
           {result ? (
             <div>
-              <div className="bg-white rounded-2xl shadow-lg border p-6 mb-6">
-                <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-2xl font-bold">Hasil Direction Snapshot</h2>
-                  <button onClick={handleRestart} className="text-blue-600 text-sm hover:underline">Buat Ulang</button>
+              <div className="bg-white rounded-2xl shadow-sm border p-6 md:p-8 mb-6">
+                <div className="flex justify-between items-start mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Hasil Direction Snapshot</h2>
+                  <button onClick={handleRestart} className="text-blue-600 text-sm font-medium hover:underline">Buat Ulang</button>
                 </div>
 
-                <p className="text-gray-700 mb-6">{result.summary}</p>
+                <p className="text-gray-600 mb-6 leading-relaxed">{result.summary}</p>
 
-                <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-4">
-                  <span className="inline-block bg-green-500 text-white text-xs px-3 py-1 rounded-full mb-2 font-medium">{result.top_recommendation.label}</span>
-                  <h3 className="text-xl font-bold mb-1">{result.top_recommendation.career_title}</h3>
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 mb-4">
+                  <span className="inline-block bg-emerald-500 text-white text-xs px-3 py-1 rounded-full mb-2 font-medium">{result.top_recommendation.label}</span>
+                  <h3 className="text-xl font-bold text-gray-900 mb-1">{result.top_recommendation.career_title}</h3>
                   <p className="text-gray-600">{result.top_recommendation.reason}</p>
                 </div>
 
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-5 mb-4">
-                  <span className="inline-block bg-yellow-500 text-white text-xs px-3 py-1 rounded-full mb-2 font-medium">{result.exploration.label}</span>
-                  <h3 className="text-xl font-bold mb-1">{result.exploration.career_title}</h3>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-4">
+                  <span className="inline-block bg-amber-500 text-white text-xs px-3 py-1 rounded-full mb-2 font-medium">{result.exploration.label}</span>
+                  <h3 className="text-xl font-bold text-gray-900 mb-1">{result.exploration.career_title}</h3>
                   <p className="text-gray-600">{result.exploration.reason}</p>
                 </div>
 
@@ -138,7 +142,7 @@ export default function Dashboard({ user, api, logout }) {
                 )}
 
                 <div className="bg-gray-50 rounded-xl p-5 mb-6">
-                  <h4 className="font-semibold mb-3">Rencana Eksperimen 7 Hari</h4>
+                  <h4 className="font-semibold text-gray-900 mb-3">Rencana Eksperimen 7 Hari</h4>
                   {result.experiment_plan && result.experiment_plan.map((task, i) => (
                     <div key={i} className="flex items-start gap-3 mb-2 text-sm">
                       <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center shrink-0 text-xs font-medium">{i + 1}</span>
@@ -147,40 +151,48 @@ export default function Dashboard({ user, api, logout }) {
                   ))}
                 </div>
 
-                <div className="flex gap-3">
-                  <a href={`/full-report?id=${result.match_id}`} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium">
+                <div className="flex flex-wrap gap-3">
+                  <a href={`/full-report?id=${result.match_id}`} className="bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 transition shadow-sm">
                     Buka Laporan Lengkap
                   </a>
                   <button onClick={() => {
                     const url = `${window.location.origin}/result?id=${result.match_id}`;
                     navigator.clipboard?.writeText(url);
                     alert("Link hasil disalin!");
-                  }} className="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm">Bagikan</button>
+                  }} className="border-2 border-gray-200 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition">Bagikan</button>
                 </div>
               </div>
 
               {history.length > 0 && (
-                <div className="bg-white rounded-xl border p-4">
-                  <h3 className="font-semibold mb-3">Riwayat Hasil</h3>
-                  {history.map((h) => (
-                    <a key={h.match_id} href={`/result?id=${h.match_id}`} className="block text-sm text-gray-600 py-2 px-2 hover:bg-gray-50 rounded-lg transition">
-                      {h.created_at?.substring(0, 10)} — {h.top_result}
-                    </a>
-                  ))}
+                <div className="bg-white rounded-2xl shadow-sm border p-6">
+                  <h3 className="font-semibold text-gray-900 mb-4">Riwayat Hasil</h3>
+                  <div className="space-y-2">
+                    {history.map((h) => (
+                      <a key={h.match_id} href={`/result?id=${h.match_id}`} className="flex items-center justify-between text-sm text-gray-600 py-3 px-4 hover:bg-gray-50 rounded-xl transition">
+                        <span className="font-medium text-gray-800">{h.top_result}</span>
+                        <span className="text-gray-400">{h.created_at?.substring(0, 10)}</span>
+                      </a>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
           ) : (
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-3">Mulai Perjalanan Karirmu</h2>
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">Mulai Perjalanan Karirmu</h2>
               <p className="text-gray-500 mb-8">Jawab 7 pertanyaan sederhana (8-12 menit) dan dapatkan Direction Map-mu.</p>
-              <div className="bg-white rounded-xl border p-6 mb-6 text-left text-sm text-gray-600">
-                <p className="font-medium text-gray-800 mb-2">Kamu akan mendapatkan:</p>
+              <div className="bg-blue-50 rounded-2xl p-6 mb-8 text-left">
+                <p className="font-semibold text-gray-900 mb-3">Kamu akan mendapatkan:</p>
                 <ul className="space-y-2">
-                  <li>✅ 1 rekomendasi karir utama + penjelasan</li>
-                  <li>✅ 1 karir alternatif untuk eksplorasi</li>
-                  <li>✅ Rencana eksperimen 7 hari konkret</li>
-                  <li>✅ Laporan lengkap gratis</li>
+                  {["1 rekomendasi karir utama + penjelasan", "1 karir alternatif untuk eksplorasi", "Rencana eksperimen 7 hari konkret", "Laporan lengkap gratis"].map((item, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                      <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                      {item}
+                    </li>
+                  ))}
                 </ul>
               </div>
               <button onClick={() => setStep(0)} className="bg-blue-600 text-white px-8 py-4 rounded-xl text-lg hover:bg-blue-700 transition font-medium shadow-lg">
@@ -195,7 +207,7 @@ export default function Dashboard({ user, api, logout }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
           <p className="text-lg font-medium text-gray-700 mb-2">{loadingText}</p>
@@ -209,9 +221,9 @@ export default function Dashboard({ user, api, logout }) {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center bg-white rounded-2xl shadow-sm border p-8 max-w-sm">
           <p className="text-red-500 mb-4">{error}</p>
-          <button onClick={handleRestart} className="bg-blue-600 text-white px-6 py-2 rounded-lg">Coba Lagi</button>
+          <button onClick={handleRestart} className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-medium">Coba Lagi</button>
         </div>
       </div>
     );
@@ -223,18 +235,18 @@ export default function Dashboard({ user, api, logout }) {
 
   if (currentStep.id === "reflection") {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         <div className="max-w-2xl mx-auto px-4 py-8">
           <div className="mb-6">
             <div className="flex gap-1 mb-2">
               {DISCOVERY_STEPS.map((_, i) => (
-                <div key={i} className={`h-1 flex-1 rounded-full ${i <= step ? "bg-blue-500" : "bg-gray-200"}`}></div>
+                <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= step ? "bg-blue-500" : "bg-gray-200"}`}></div>
               ))}
             </div>
             <p className="text-sm text-gray-400">Langkah {step + 1} dari {DISCOVERY_STEPS.length}</p>
           </div>
-          <div className="bg-white rounded-2xl shadow-lg border p-6 md:p-8">
-            <h2 className="text-xl font-bold mb-2">{currentStep.title}</h2>
+          <div className="bg-white rounded-2xl shadow-sm border p-6 md:p-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">{currentStep.title}</h2>
             <p className="text-gray-500 mb-6">{currentStep.question}</p>
             <textarea
               value={answers.reflection || ""}
@@ -243,12 +255,12 @@ export default function Dashboard({ user, api, logout }) {
               className="w-full border rounded-xl px-4 py-3 h-40 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
             />
             <div className="flex justify-between mt-8">
-              <button onClick={() => setStep(step - 1)} className="border border-gray-300 px-6 py-2 rounded-lg hover:bg-gray-50">Kembali</button>
-              <button onClick={() => setStep(step + 1)} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Lewati</button>
+              <button onClick={() => setStep(step - 1)} className="border-2 border-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-medium hover:bg-gray-50 transition">Kembali</button>
+              <button onClick={() => setStep(step + 1)} className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition">Lewati</button>
             </div>
           </div>
           <div className="mt-4 text-center">
-            <button onClick={handleRestart} className="text-gray-400 text-sm hover:text-gray-600">Batalkan</button>
+            <button onClick={handleRestart} className="text-gray-400 text-sm hover:text-gray-600 font-medium">Batalkan</button>
           </div>
         </div>
       </div>
@@ -256,19 +268,19 @@ export default function Dashboard({ user, api, logout }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="mb-6">
           <div className="flex gap-1 mb-2">
             {DISCOVERY_STEPS.map((_, i) => (
-              <div key={i} className={`h-1 flex-1 rounded-full ${i <= step ? "bg-blue-500" : "bg-gray-200"}`}></div>
+              <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= step ? "bg-blue-500" : "bg-gray-200"}`}></div>
             ))}
           </div>
           <p className="text-sm text-gray-400">Langkah {step + 1} dari {DISCOVERY_STEPS.length}</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg border p-6 md:p-8">
-          <h2 className="text-xl font-bold mb-2">{currentStep.title}</h2>
+        <div className="bg-white rounded-2xl shadow-sm border p-6 md:p-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{currentStep.title}</h2>
           <p className="text-gray-500 mb-6">{currentStep.question}</p>
 
           {isMultiSelect ? (
@@ -314,13 +326,13 @@ export default function Dashboard({ user, api, logout }) {
           <div className="flex justify-between mt-8">
             <button
               onClick={() => setStep(step - 1)}
-              className="border border-gray-300 px-6 py-2 rounded-lg hover:bg-gray-50"
+              className="border-2 border-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-medium hover:bg-gray-50 transition"
             >
               Kembali
             </button>
             <button
               onClick={() => setStep(step + 1)}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition disabled:opacity-50"
               disabled={isMultiSelect ? selected.length === 0 : !answers[currentStep.id]}
             >
               {step === DISCOVERY_STEPS.length - 1 ? "Lihat Hasil" : "Lanjut"}
@@ -329,7 +341,7 @@ export default function Dashboard({ user, api, logout }) {
         </div>
 
         <div className="mt-4 text-center">
-          <button onClick={handleRestart} className="text-gray-400 text-sm hover:text-gray-600">Batalkan</button>
+          <button onClick={handleRestart} className="text-gray-400 text-sm hover:text-gray-600 font-medium">Batalkan</button>
         </div>
       </div>
     </div>
