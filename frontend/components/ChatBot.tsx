@@ -24,10 +24,10 @@ export default function ChatBot({ token, user, api }: { token?: string; user?: u
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  const send = async () => {
-    const q = input.trim();
+  const send = async (text?: string) => {
+    const q = (text || input).trim();
     if (!q || !token) return;
-    setInput("");
+    if (input !== q) setInput("");
     setError("");
     setMessages((prev) => [...prev, { role: "user", text: q }]);
     setLoading(true);
@@ -118,14 +118,14 @@ export default function ChatBot({ token, user, api }: { token?: string; user?: u
             <div ref={messagesEndRef} />
           </div>
 
-          {messages.length === 1 && !loading && (
+          {messages.length <= 1 && !loading && (
             <div className="px-3 pb-2">
               <p className="text-xs text-ink/40 mb-2">Coba tanyakan:</p>
               <div className="flex flex-wrap gap-1.5">
                 {SUGGESTIONS.map((s, i) => (
                   <button
                     key={i}
-                    onClick={() => { setInput(s); }}
+                    onClick={() => send(s)}
                     className="text-xs bg-warm border border-ink/20 rounded-full px-3 py-1.5 text-ink/70 hover:bg-ink hover:text-white hover:border-ink transition"
                   >
                     {s}
@@ -149,7 +149,7 @@ export default function ChatBot({ token, user, api }: { token?: string; user?: u
               className="flex-1 border-2 border-ink/20 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-ink focus:ring-0 bg-warm"
             />
             <button
-              onClick={send}
+              onClick={() => send()}
               disabled={loading || !input.trim()}
               className="bg-ink text-white px-4 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-40 disabled:pointer-events-none hover:shadow-md transition-all active:scale-95"
             >

@@ -28,7 +28,7 @@ export default function History({ user, api }) {
 
   return (
     <PageShell title="Riwayat" showBack backHref="/dashboard">
-      <Head><title>Riwayat — Life Compass</title></Head>
+      <Head><title>Riwayat — Life Compass</title><meta name="robots" content="noindex" /></Head>
       <h2 className="text-2xl font-bold text-ink mb-6">Riwayat Discovery</h2>
       {loading ? (
         <LoadingState skeleton="card" count={3} />
@@ -41,7 +41,7 @@ export default function History({ user, api }) {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-bold text-ink">{item.top_result || "Hasil Discovery"}</h3>
-                  <p className="text-xs text-ink/50 mt-1">{item.created_at}</p>
+                  <p className="text-xs text-ink/50 mt-1">{item.created_at ? new Date(item.created_at).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}</p>
                 </div>
                 <a href={`/result?id=${item.match_id}`}>
                   <Button size="sm" variant="outline">Lihat</Button>

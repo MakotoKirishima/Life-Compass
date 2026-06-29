@@ -74,6 +74,15 @@ export default function Landing({ user, logout, api }) {
             "query-input": "required name=search_term_string"
           }
         }) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": FAQS.map(f => ({
+            "@type": "Question",
+            "name": f.q,
+            "acceptedAnswer": { "@type": "Answer", "text": f.a }
+          }))
+        }) }} />
       </Head>
 
       {/* Navigation */}

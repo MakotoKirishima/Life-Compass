@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, UserProfile, CareerMatch, ExperimentPlan, ExperimentTaskStatus
@@ -66,7 +66,7 @@ def get_history(current_user: User = Depends(get_current_user), db: Session = De
 def get_result(match_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     match = db.query(CareerMatch).filter(CareerMatch.id == match_id, CareerMatch.user_id == current_user.id).first()
     if not match:
-        return {"error": "Not found"}, 404
+        raise HTTPException(status_code=404, detail="Result not found")
     results = match.results or []
     top = results[0] if results else {}
     alt = results[1] if len(results) > 1 else (results[0] if results else {})
@@ -99,7 +99,7 @@ def get_experiments(current_user: User = Depends(get_current_user), db: Session 
 def update_task(plan_id: int, task_index: int, data: ExperimentTaskUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     plan = db.query(ExperimentPlan).filter(ExperimentPlan.id == plan_id, ExperimentPlan.user_id == current_user.id).first()
     if not plan:
-        return {"error": "Not found"}, 404
+        raise HTTPException(status_code=404, detail="Plan not found")
     ts = db.query(ExperimentTaskStatus).filter(ExperimentTaskStatus.plan_id == plan_id, ExperimentTaskStatus.task_index == task_index).first()
     if not ts:
         ts = ExperimentTaskStatus(plan_id=plan_id, task_index=task_index)

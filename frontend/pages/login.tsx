@@ -87,7 +87,11 @@ export default function Login({ login, api, user }) {
     <>
       <Head>
         <title>Masuk — Life Compass</title>
-        <meta name="description" content="Masuk atau daftar gratis untuk memulai perjalanan karirmu." />
+        <meta name="description" content="Masuk atau daftar gratis untuk memulai perjalanan karirmu. Gunakan email atau Google untuk akses semua fitur Life Compass." />
+        <meta property="og:title" content="Masuk — Life Compass" />
+        <meta property="og:description" content="Masuk atau daftar gratis untuk memulai perjalanan karirmu." />
+        <meta property="og:image" content="https://lifecompass.arishia.cyou/og-image.svg" />
+        <link rel="canonical" href="https://lifecompass.arishia.cyou/login" />
       </Head>
       <div className="min-h-screen bg-warm flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-md">

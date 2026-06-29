@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Career
@@ -12,13 +12,13 @@ def list_careers(category: str = None, db: Session = Depends(get_db)):
     if category:
         q = q.filter(Career.category == category)
     careers = q.all()
-    return [{"id": c.id, "title": c.title, "category": c.category, "description": (c.description or "")[:100] + "...", "market_prospect": c.market_prospect, "ai_risk": c.ai_risk} for c in careers]
+    return [{"id": c.id, "title": c.title, "category": c.category, "description": ((c.description or "")[:100] + "...") if len(c.description or "") > 100 else (c.description or ""), "market_prospect": c.market_prospect, "ai_risk": c.ai_risk} for c in careers]
 
 @router.get("/{career_id}")
 def get_career(career_id: int, db: Session = Depends(get_db)):
     c = db.query(Career).filter(Career.id == career_id).first()
     if not c:
-        return {"error": "Not found"}, 404
+        raise HTTPException(status_code=404, detail="Career not found")
     return {
         "id": c.id, "title": c.title, "category": c.category, "description": c.description,
         "common_tasks": c.common_tasks, "required_skills": c.required_skills,

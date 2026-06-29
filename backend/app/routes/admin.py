@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, CareerMatch, Career, LandingContent, Testimonial, AdminSetting
@@ -28,7 +28,7 @@ def list_users(admin: User = Depends(get_admin_user), db: Session = Depends(get_
 def get_user_detail(user_id: int, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
     u = db.query(User).filter(User.id == user_id).first()
     if not u:
-        return {"error": "Not found"}, 404
+        raise HTTPException(status_code=404, detail="User not found")
     discoveries = db.query(CareerMatch).filter(CareerMatch.user_id == u.id).count()
     return {
         "id": u.id, "email": u.email, "display_name": u.display_name,
@@ -53,7 +53,7 @@ def update_landing_page(data: dict, admin: User = Depends(get_admin_user), db: S
     return {"message": "Landing page updated"}
 
 @router.get("/landing-page")
-def get_landing_page(db: Session = Depends(get_db)):
+def get_landing_page(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
     lc = db.query(LandingContent).first()
     testimonials = db.query(Testimonial).order_by(Testimonial.sort_order).all()
     if not lc:
@@ -87,7 +87,7 @@ def admin_create_career(data: dict, admin: User = Depends(get_admin_user), db: S
 def admin_update_career(career_id: int, data: dict, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
     career = db.query(Career).filter(Career.id == career_id).first()
     if not career:
-        return {"error": "Not found"}, 404
+        raise HTTPException(status_code=404, detail="Career not found")
     for key in ["title", "category", "description", "common_tasks", "required_skills", "optional_skills", "education_paths", "salary_min", "salary_max", "market_prospect", "ai_risk", "entry_barriers", "source_notes", "status"]:
         if key in data:
             setattr(career, key, data[key])
@@ -101,7 +101,7 @@ def admin_update_career(career_id: int, data: dict, admin: User = Depends(get_ad
 def admin_delete_career(career_id: int, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
     career = db.query(Career).filter(Career.id == career_id).first()
     if not career:
-        return {"error": "Not found"}, 404
+        raise HTTPException(status_code=404, detail="Career not found")
     db.delete(career)
     db.commit()
     return {"message": "Deleted"}

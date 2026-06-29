@@ -28,8 +28,15 @@ __pycache__/
 Thumbs.db
 *Zone.Identifier
 
-# Docker
-docker-root/
-
 # Logs
 *.log
+
+# Agent files (opencode skills)
+.agents/
+skills-lock.json
+
+# Development artifacts
+*OVERHAUL*
+*ITERATION_LOG*
+*AUDIT.md
+final_audit.js

@@ -32,7 +32,7 @@ export default function ResultDetail({ user, api }) {
 
   return (
     <PageShell title="Hasil Discovery" showBack backHref="/dashboard">
-      <Head><title>Hasil Discovery — Life Compass</title></Head>
+      <Head><title>Hasil Discovery — Life Compass</title><meta name="robots" content="noindex" /></Head>
       {loading ? (
         <LoadingState skeleton="card" count={2} />
       ) : !result ? (
@@ -98,7 +98,7 @@ export default function ResultDetail({ user, api }) {
               <h3 className="font-bold text-lg text-ink mb-3">Rencana Eksperimen 7 Hari</h3>
               <p className="text-sm text-ink/60 mb-4">Coba langkah kecil ini untuk menguji karir pilihanmu:</p>
               <div className="space-y-2">
-                {result.experiment_plan.slice(0, 5).map((task, i) => (
+                {result.experiment_plan.map((task, i) => (
                   <div key={i} className="flex items-start gap-3 text-sm bg-warm rounded-xl p-3 border border-ink/10">
                     <span className="bg-ink text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 text-xs font-bold">{i + 1}</span>
                     <span className="text-ink pt-0.5">{task}</span>

@@ -32,7 +32,7 @@ export default function FullReport({ user, api }) {
 
   return (
     <PageShell title="Full Report" showBack backHref={`/result?id=${id}`}>
-      <Head><title>Full Report — Life Compass</title></Head>
+      <Head><title>Full Report — Life Compass</title><meta name="robots" content="noindex" /></Head>
       {loading ? (
         <LoadingState skeleton="card" count={2} />
       ) : !result ? (

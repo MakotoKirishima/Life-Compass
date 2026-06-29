@@ -117,6 +117,7 @@ def _seed_admin():
     finally:
         db.close()
 
+from app.schemas import ProfileUpdate
 from app.routes import auth, discovery, career, admin, chatbot
 app.include_router(auth.router)
 app.include_router(discovery.router)
@@ -159,16 +160,17 @@ def get_profile(current_user=Depends(auth.get_current_user), db=Depends(auth.get
     }
 
 @app.put("/api/user/profile")
-def update_profile(data: dict, current_user=Depends(auth.get_current_user), db=Depends(auth.get_db)):
+def update_profile(data: ProfileUpdate, current_user=Depends(auth.get_current_user), db=Depends(auth.get_db)):
     from app.models import UserProfile
-    if "display_name" in data and data["display_name"]:
-        current_user.display_name = data["display_name"]
+    update_data = data.model_dump(exclude_unset=True)
+    if "display_name" in update_data and update_data["display_name"]:
+        current_user.display_name = update_data["display_name"]
     profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).order_by(UserProfile.created_at.desc()).first()
     if not profile:
         profile = UserProfile(user_id=current_user.id)
         db.add(profile)
     for key in ["stage", "education_level", "location", "interests", "work_values", "skills", "constraints", "work_preferences", "reflection"]:
-        if key in data:
-            setattr(profile, key, data[key])
+        if key in update_data:
+            setattr(profile, key, update_data[key])
     db.commit()
     return {"message": "Profile updated"}

@@ -47,7 +47,7 @@ export default function Experiments({ user, api }) {
 
   return (
     <PageShell title="Eksperimen" showBack backHref="/dashboard">
-      <Head><title>Eksperimen — Life Compass</title></Head>
+      <Head><title>Eksperimen — Life Compass</title><meta name="robots" content="noindex" /></Head>
       <h2 className="text-2xl font-bold text-ink mb-6">Eksperimen 7 Hari</h2>
       {loading ? (
         <LoadingState skeleton="card" count={2} />
@@ -80,14 +80,14 @@ export default function Experiments({ user, api }) {
                 {(plan.tasks || []).map((task, i) => {
                   const status = (plan.task_status || []).find((t) => t.index === i);
                   return (
-                    <label key={i} className={`flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all text-sm ${status?.done ? "bg-emerald-50 line-through text-ink/40" : "bg-warm hover:bg-ink/5 border border-ink/10"}`}>
+                    <label key={i} className={`flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all text-sm ${status?.done ? "bg-emerald-50 text-ink/40" : "bg-warm hover:bg-ink/5 border-2 border-ink/10 hover:border-ink/30"}`}>
                       <input
                         type="checkbox"
                         checked={status?.done || false}
                         onChange={(e) => toggleTask(plan.id, i, e.target.checked)}
-                        className="mt-0.5 w-4 h-4 rounded border-ink/30 text-ink focus:ring-ink"
+                        className="mt-0.5 w-4 h-4 accent-ink rounded border-ink/30 text-ink focus:ring-ink"
                       />
-                      <span className="pt-0.5">{task}</span>
+                      <span className={`pt-0.5 ${status?.done ? "line-through" : ""}`}>{task}</span>
                     </label>
                   );
                 })}

@@ -162,14 +162,12 @@ class LandingContentOut(BaseModel):
     hero_title: str
     hero_subtitle: str
     cta_text: str
-    price: int
     testimonials: list = []
 
 class LandingContentUpdate(BaseModel):
     hero_title: Optional[str] = None
     hero_subtitle: Optional[str] = None
     cta_text: Optional[str] = None
-    price: Optional[int] = None
 
 class AdminSettingsOut(BaseModel):
     gemini_available: bool

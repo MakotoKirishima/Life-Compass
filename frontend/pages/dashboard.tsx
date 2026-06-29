@@ -97,7 +97,12 @@ export default function Dashboard({ user, api, logout }) {
       <>
         <Head>
           <title>Dashboard — Life Compass</title>
-          <meta name="description" content="Mulai discovery karir dan dapatkan rekomendasi personal." />
+          <meta name="description" content="Mulai discovery karir dan dapatkan rekomendasi personal. Isi 7 pertanyaan tentang minat, skill, dan situasimu." />
+          <meta name="robots" content="noindex" />
+          <meta property="og:title" content="Dashboard — Life Compass" />
+          <meta property="og:description" content="Mulai discovery karir dan dapatkan rekomendasi personal." />
+          <meta property="og:image" content="https://lifecompass.arishia.cyou/og-image.svg" />
+          <link rel="canonical" href="https://lifecompass.arishia.cyou/dashboard" />
         </Head>
         <div className="min-h-screen bg-warm">
           <nav className="bg-card border-b-2 border-ink px-6 py-4 flex items-center justify-between sticky top-0 z-40">
@@ -152,7 +157,7 @@ export default function Dashboard({ user, api, logout }) {
                   {history.slice(0, 4).map((item) => (
                     <Card key={item.match_id} padding="sm" hover>
                       <p className="font-semibold text-ink text-sm">{item.top_result || "Hasil Discovery"}</p>
-                      <p className="text-xs text-ink/50 mt-1">{item.created_at}</p>
+                      <p className="text-xs text-ink/50 mt-1">{item.created_at ? new Date(item.created_at).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" }) : ""}</p>
                       <a href={`/result?id=${item.match_id}`}>
                         <Button size="sm" variant="ghost" className="mt-2 !text-ink/60 hover:!text-ink">Lihat →</Button>
                       </a>
@@ -242,7 +247,7 @@ export default function Dashboard({ user, api, logout }) {
                 <Card padding="lg">
                   <h3 className="font-bold text-lg text-ink mb-3">Rencana Eksperimen 7 Hari</h3>
                   <div className="space-y-2">
-                    {result.experiment_plan.slice(0, 5).map((task, i) => (
+                    {result.experiment_plan.map((task, i) => (
                       <div key={i} className="flex items-start gap-3 text-sm bg-warm rounded-xl p-3 border border-ink/10">
                         <span className="bg-ink text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 text-xs font-bold">{i + 1}</span>
                         <span className="text-ink pt-0.5">{task}</span>
@@ -285,27 +290,39 @@ export default function Dashboard({ user, api, logout }) {
           <p className="text-ink/60 mb-6">{currentStep.question}</p>
 
           {currentStep.id === "reflection" ? (
-            <textarea
-              value={String(answers.reflection || "")}
-              onChange={(e) => setAnswers({ ...answers, reflection: e.target.value })}
-              placeholder="Contoh: Aku lulusan SMK jurusan Multimedia. Aku suka desain tapi juga tertarik dengan programming. Orang tuaku ingin aku jadi PNS..."
-              className="w-full border-2 border-ink/20 rounded-xl px-4 py-3 h-40 focus:outline-none focus:border-ink text-sm bg-warm"
-            />
+            <div>
+              <textarea
+                value={String(answers.reflection || "")}
+                onChange={(e) => setAnswers({ ...answers, reflection: e.target.value })}
+                placeholder="Contoh: Aku lulusan SMK jurusan Multimedia. Aku suka desain tapi juga tertarik dengan programming. Orang tuaku ingin aku jadi PNS..."
+                className="w-full border-2 border-ink/20 rounded-xl px-4 py-3 h-40 focus:outline-none focus:border-ink text-sm bg-warm"
+                maxLength={1000}
+              />
+              <p className="text-xs text-ink/40 mt-1 text-right">{String(answers.reflection || "").length}/1000</p>
+            </div>
           ) : isMultiSelect ? (
-            <div className="grid grid-cols-2 gap-3">
-              {(OPTIONS[currentStep.id] || []).map((opt) => (
-                <button
-                  key={opt}
-                  onClick={() => handleSelect(opt)}
-                  className={`text-left px-4 py-3 rounded-xl text-sm font-medium transition-all border-2 ${
-                    selected.includes(opt)
-                      ? "bg-ink text-white border-ink"
-                      : "bg-warm text-ink/70 border-ink/20 hover:border-ink/50"
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs text-ink/40">Pilih satu atau lebih</p>
+                {selected.length > 0 && (
+                  <span className="text-xs font-semibold text-ink/60 bg-ink/5 px-2.5 py-1 rounded-full">{selected.length} dipilih</span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {(OPTIONS[currentStep.id] || []).map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => handleSelect(opt)}
+                    className={`text-left px-4 py-3 rounded-xl text-sm font-medium transition-all border-2 ${
+                      selected.includes(opt)
+                        ? "bg-ink text-white border-ink"
+                        : "bg-warm text-ink/70 border-ink/20 hover:border-ink/50"
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">

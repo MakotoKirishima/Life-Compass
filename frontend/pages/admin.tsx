@@ -54,7 +54,7 @@ export default function Admin({ user, api }) {
 
   return (
     <PageShell title="Admin" showBack backHref="/dashboard">
-      <Head><title>Admin — Life Compass</title></Head>
+      <Head><title>Admin — Life Compass</title><meta name="robots" content="noindex" /></Head>
       <h2 className="text-2xl font-bold text-ink mb-6">Panel Admin</h2>
       {loading ? (
         <LoadingState skeleton="card" count={2} />
