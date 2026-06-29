@@ -7,25 +7,7 @@ import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
 import LoadingState from "../components/ui/LoadingState";
 import PageShell from "../components/ui/PageShell";
-
-const SCORE_COLORS = {
-  "Cocok Tinggi": { bg: "bg-emerald-100", bar: "bg-emerald-500", text: "text-emerald-800" },
-  "Cocok Sedang": { bg: "bg-blue-100", bar: "bg-blue-500", text: "text-blue-800" },
-  "Coba Dulu": { bg: "bg-amber-100", bar: "bg-amber-500", text: "text-amber-800" },
-  "Kurang Cocok": { bg: "bg-red-100", bar: "bg-red-400", text: "text-red-800" },
-};
-
-function ScoreBar({ score, label }: { score: number; label: string }) {
-  const colors = SCORE_COLORS[label] || { bar: "bg-gray-400" };
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex-1 h-3 bg-ink/10 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full transition-all duration-700 ${colors.bar}`} style={{ width: `${Math.min(score, 100)}%` }} />
-      </div>
-      <span className="text-xs font-bold text-ink/60 w-12 text-right">{score}%</span>
-    </div>
-  );
-}
+import ScoreBar from "../components/ui/ScoreBar";
 
 export default function ResultDetail({ user, api }) {
   const router = useRouter();
@@ -97,19 +79,16 @@ export default function ResultDetail({ user, api }) {
             <Card padding="lg">
               <h3 className="font-bold text-lg text-ink mb-4">Semua Skor Kecocokan</h3>
               <div className="space-y-4">
-                {result.results.slice(0, 6).map((c, i) => {
-                  const colors = SCORE_COLORS[c.label] || { text: "text-gray-800" };
-                  return (
-                    <div key={i} className="border-b-2 border-ink/10 pb-4 last:border-0 last:pb-0">
-                      <div className="flex justify-between items-center mb-1.5">
-                        <h4 className="font-semibold text-ink text-sm">{c.title}</h4>
-                        <span className={`text-xs font-bold ${colors.text}`}>{c.label}</span>
-                      </div>
-                      <ScoreBar score={c.score} label={c.label} />
-                      {c.reason && <p className="text-xs text-ink/50 mt-1">{c.reason}</p>}
+                {result.results.slice(0, 6).map((c, i) => (
+                  <div key={i} className="border-b-2 border-ink/10 pb-4 last:border-0 last:pb-0">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <h4 className="font-semibold text-ink text-sm">{c.title}</h4>
+                      <span className={`text-xs font-bold ${c.label === "Cocok Tinggi" ? "text-emerald-700" : c.label === "Cocok Sedang" ? "text-blue-700" : c.label === "Coba Dulu" ? "text-amber-700" : "text-red-700"}`}>{c.label}</span>
                     </div>
-                  );
-                })}
+                    <ScoreBar score={c.score} label={c.label} />
+                    {c.reason && <p className="text-xs text-ink/50 mt-1">{c.reason}</p>}
+                  </div>
+                ))}
               </div>
             </Card>
           )}

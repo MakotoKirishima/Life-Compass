@@ -42,7 +42,7 @@ export default function ChatBot({ token, user, api }: { token?: string; user?: u
       });
 
       if (res.ok && res.data?.answer) {
-        setMessages((prev) => [...prev, { role: "bot", text: res.data!.answer }]);
+        setMessages((prev) => [...prev, { role: "bot", text: res.data.answer }]);
       } else if (res.status === 401) {
         setMessages((prev) => [
           ...prev,
@@ -84,7 +84,7 @@ export default function ChatBot({ token, user, api }: { token?: string; user?: u
       </button>
 
       {open && (
-        <div className="fixed bottom-24 right-6 w-80 sm:w-96 bg-card border-2 border-ink rounded-2xl shadow-xl z-50 flex flex-col max-h-[500px] animate-in slide-in-from-bottom-4 duration-200">
+        <div className="fixed bottom-24 right-6 w-80 sm:w-96 bg-card border-2 border-ink rounded-2xl shadow-xl z-50 flex flex-col max-h-[500px] animate-in slide-in-from-bottom-4 animate-duration-200">
           <div className="bg-ink text-white px-4 py-3 rounded-t-[14px] font-semibold text-sm flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />

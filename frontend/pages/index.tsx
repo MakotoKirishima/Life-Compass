@@ -6,7 +6,7 @@ import Badge from "../components/ui/Badge";
 
 const FEATURES = [
   { icon: "📋", title: "Discovery Terstruktur", desc: "7 bagian pertanyaan untuk memahami minat, skill, dan situasimu secara mendalam.", badge: "Gratis" },
-  { icon: "🎯", title: "Career Match", desc: "AI mencocokkan jawabanmu dengan 80+ jalur karir Indonesia.", badge: "Akurat" },
+  { icon: "🎯", title: "Career Match", desc: "AI mencocokkan jawabanmu dengan puluhan jalur karir Indonesia.", badge: "Akurat" },
   { icon: "🗺️", title: "Direction Map", desc: "Dapatkan peta arah karir yang jelas dengan rekomendasi personal.", badge: "Personal" },
   { icon: "🚀", title: "Eksperimen 7 Hari", desc: "Rencana aksi konkret untuk menguji karir pilihanmu.", badge: "Rencana 7 hari" },
   { icon: "📈", title: "Riwayat Progress", desc: "Pantau perjalanan karirmu dan lihat perkembangan dari waktu ke waktu.", badge: "Butuh login" },
@@ -15,7 +15,7 @@ const FEATURES = [
 
 const HOW_IT_WORKS = [
   { step: "1", title: "Jawab Discovery", desc: "Isi 7 bagian pertanyaan tentang minat, skill, dan situasimu. Hanya 8–12 menit." },
-  { step: "2", title: "Dapatkan Hasil", desc: "AI mencocokkan jawabanmu dengan database 80+ karir Indonesia." },
+  { step: "2", title: "Dapatkan Hasil", desc: "AI mencocokkan jawabanmu dengan database karir Indonesia." },
   { step: "3", title: "Eksperimen 7 Hari", desc: "Pilih eksperimen kecil dan mulai action minggu ini." },
   { step: "4", title: "Evaluasi & Lanjut", desc: "Simpan progress, ulangi discovery, dan evaluasi langkah berikutnya." },
 ];
@@ -27,6 +27,8 @@ const FAQS = [
   { q: "Apakah cocok untuk pelajar/mahasiswa/fresh graduate?", a: "Sangat cocok! Life Compass dirancang untuk siapa pun yang baru memulai atau sedang mempertimbangkan arah karir." },
   { q: "Apakah data saya disimpan?", a: "Data kamu dienkripsi, tidak dijual ke pihak ketiga, dan AI tidak dilatih dari data kamu. Kamu bisa hapus akun kapan saja." },
 ];
+
+const SITE_URL = "https://lifecompass.arishia.cyou";
 
 export default function Landing({ user, logout, api }) {
   const [sample, setSample] = useState(null);
@@ -58,6 +60,20 @@ export default function Landing({ user, logout, api }) {
         <meta name="description" content="Life Compass membantu kamu memahami minat, skill, dan langkah kecil untuk menentukan arah karier secara lebih jelas." />
         <meta property="og:title" content="Life Compass — Temukan Arah Kariermu" />
         <meta property="og:description" content="Alat bantu keputusan karir gratis untuk pelajar dan pencari kerja Indonesia." />
+        <meta property="og:url" content={SITE_URL} />
+        <link rel="canonical" href={SITE_URL} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "Life Compass",
+          "url": SITE_URL,
+          "description": "Alat bantu keputusan karir gratis untuk pelajar dan pencari kerja Indonesia.",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": `${SITE_URL}/faq?search={search_term_string}`,
+            "query-input": "required name=search_term_string"
+          }
+        }) }} />
       </Head>
 
       {/* Navigation */}
@@ -114,7 +130,7 @@ export default function Landing({ user, logout, api }) {
             </Card>
             <Card padding="sm" className="text-center">
               <div className="text-2xl mb-2">🗺️</div>
-              <div className="text-lg font-bold text-ink">80+</div>
+              <div className="text-lg font-bold text-ink">27</div>
               <div className="text-xs text-ink/60">Data Karir Indonesia</div>
             </Card>
           </div>
@@ -126,31 +142,31 @@ export default function Landing({ user, logout, api }) {
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm">
             <span className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               Gratis
             </span>
             <span className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               Tanpa biaya tersembunyi
             </span>
             <span className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               Berbasis data karier Indonesia
             </span>
             <span className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               Rencana aksi 7 hari
             </span>
             <span className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               Untuk pelajar, mahasiswa, fresh graduate & career switcher

@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -21,12 +25,14 @@ body {
 }
 
 .animate-in {
-  animation-duration: 0.2s;
   animation-fill-mode: both;
 }
 
 .slide-in-from-bottom-4 { animation-name: slide-in-from-bottom-4; }
 .zoom-in-95 { animation-name: zoom-in-95; }
+
+.animate-duration-200 { animation-duration: 0.2s; }
+.animate-duration-300 { animation-duration: 0.3s; }
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

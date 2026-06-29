@@ -52,7 +52,7 @@ export default function Dashboard({ user, api, logout }) {
   }, [user]);
 
   const loadingMessages = [
-    "AI sedang menganalisa jawabanmu dengan 80+ data karir Indonesia...",
+    "AI sedang menganalisa jawabanmu dengan data karir Indonesia...",
     "Mencocokkan minat dengan karir yang sesuai...",
     "Menyusun rekomendasi personal untukmu...",
     "Hampir selesai! Menyiapkan rencana eksperimen...",
@@ -154,7 +154,7 @@ export default function Dashboard({ user, api, logout }) {
                       <p className="font-semibold text-ink text-sm">{item.top_result || "Hasil Discovery"}</p>
                       <p className="text-xs text-ink/50 mt-1">{item.created_at}</p>
                       <a href={`/result?id=${item.match_id}`}>
-                        <Button size="sm" variant="ghost" className="mt-2 !p-0 !text-ink/60 hover:!text-ink">Lihat →</Button>
+                        <Button size="sm" variant="ghost" className="mt-2 !text-ink/60 hover:!text-ink">Lihat →</Button>
                       </a>
                     </Card>
                   ))}
@@ -162,16 +162,18 @@ export default function Dashboard({ user, api, logout }) {
               </div>
             )}
 
-            <Card padding="md" className="bg-ink/5 border-ink/20">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">💬</span>
-                <div className="flex-1">
-                  <p className="font-bold text-ink">Butuh saran cepat?</p>
-                  <p className="text-sm text-ink/60 mt-1">Tanya asisten Life Compass soal karir, jurusan, atau skill.</p>
+            <button onClick={() => { const btn = document.querySelector<HTMLButtonElement>('[aria-label="Buka asisten"]'); btn?.click(); }} className="w-full text-left">
+              <Card padding="md" className="bg-ink/5 border-ink/20 hover:bg-ink/10 transition cursor-pointer">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">💬</span>
+                  <div className="flex-1">
+                    <p className="font-bold text-ink">Butuh saran cepat?</p>
+                    <p className="text-sm text-ink/60 mt-1">Tanya asisten Life Compass soal karir, jurusan, atau skill.</p>
+                  </div>
+                  <span className="text-xs bg-ink/10 text-ink/60 px-3 py-1 rounded-full font-semibold">Chat</span>
                 </div>
-                <span className="text-xs bg-ink/10 text-ink/60 px-3 py-1 rounded-full font-semibold">Chat</span>
-              </div>
-            </Card>
+              </Card>
+            </button>
           </main>
         </div>
       </>

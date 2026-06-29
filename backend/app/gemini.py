@@ -94,29 +94,148 @@ Label: Cocok Tinggi (>=80), Cocok Sedang (60-79), Coba Dulu (40-59), Kurang Coco
 
     return _fallback_scoring(profile_data, careers, db)
 
+# Value-to-category mappings for work values
+_VALUE_CATEGORY_MAP = {
+    "gaji tinggi": ["Teknologi (IT)", "Keuangan & Hukum", "Bisnis & Marketing", "Teknik non-IT"],
+    "stabilitas": ["Pemerintahan & BUMN", "Pendidikan", "Kesehatan", "Keuangan & Hukum"],
+    "kreativitas": ["Kreatif & Media", "Teknologi (IT)", "Bisnis & Marketing"],
+    "fleksibilitas": ["Teknologi (IT)", "Kreatif & Media", "Bisnis & Marketing"],
+    "dampak sosial": ["Kesehatan", "Pendidikan", "Pertanian & Kelautan", "Pemerintahan & BUMN"],
+    "work-life balance": ["Pemerintahan & BUMN", "Pendidikan", "Pertanian & Kelautan"],
+    "jenjang karir": ["Teknologi (IT)", "Keuangan & Hukum", "Bisnis & Marketing", "Teknik non-IT"],
+    "kepemimpinan": ["Bisnis & Marketing", "Pemerintahan & BUMN", "Keuangan & Hukum"],
+}
+
+# Constraint-to-career penalties/bonuses
+_CONSTRAINT_MAP = {
+    "tidak bisa coding": {"penalty_categories": ["Teknologi (IT)"], "penalty": 10},
+    "tidak bisa kuliah": {"penalty_if_no_bootcamp": True, "penalty": 8},
+    "takut matematika": {"penalty_categories": ["Teknologi (IT)", "Keuangan & Hukum", "Teknik non-IT"], "penalty": 10},
+    "butuh gaji cepat": {"bonus_industries": True, "bonus": 5},
+}
+
+# Preference-to-category mapping
+_PREFERENCE_MAP = {
+    "remote": ["Teknologi (IT)", "Kreatif & Media", "Bisnis & Marketing"],
+    "hybrid": ["Teknologi (IT)", "Bisnis & Marketing", "Keuangan & Hukum"],
+    "kantor": None,
+    "freelance": ["Kreatif & Media", "Teknologi (IT)"],
+    "startup": ["Teknologi (IT)", "Kreatif & Media"],
+    "perusahaan besar": None,
+    "pemerintahan": ["Pemerintahan & BUMN"],
+    "wirausaha": ["Bisnis & Marketing"],
+}
+
+def _parse_salary(salary_str: str | None) -> int | None:
+    if not salary_str:
+        return None
+    digits = "".join(c for c in salary_str if c.isdigit() or c == ".")
+    if not digits:
+        return None
+    return int(float(digits.replace(".", "")))
+
+def _education_level_matches(education_level: str | None, career_education_paths: list) -> bool:
+    if not education_level or not career_education_paths:
+        return False
+    el = education_level.lower()
+    paths_lower = [p.lower() for p in career_education_paths]
+    if "sma" in el or "smk" in el:
+        return any("sma" in p or "smk" in p or "bootcamp" in p or "d3" in p for p in paths_lower)
+    if "mahasiswa" in el or "s1" in el or "sarjana" in el:
+        return any("s1" in p or "sarjana" in p for p in paths_lower)
+    if "d3" in el or "diploma" in el:
+        return any("d3" in p or "diploma" in p for p in paths_lower)
+    if "s2" in el or "magister" in el:
+        return any("s2" in p or "magister" in p for p in paths_lower)
+    return False
+
 def _fallback_scoring(profile_data: dict, careers: list, db: Session) -> list[dict]:
     results = []
     user_interests = set(i.lower() for i in profile_data.get("interests", []))
     user_skills = set(s.lower() for s in profile_data.get("skills", []))
     user_values = set(v.lower() for v in profile_data.get("work_values", []))
+    user_constraints = set(v.lower() for v in profile_data.get("constraints", []))
+    user_preferences = set(v.lower() for v in profile_data.get("work_preferences", []))
+    user_education = (profile_data.get("education_level") or "").strip()
+    user_stage = (profile_data.get("stage") or "").strip()
 
     for c in careers:
-        score = 50.0
+        score = 40.0
         reasons = []
 
+        # 1. Skills (+7 per match, max +21)
         career_skills = set(s.lower() for s in (c.required_skills or []))
-        overlap = user_skills & career_skills
-        if overlap:
-            score += len(overlap) * 5
-            reasons.append(f"Skill cocok: {', '.join(list(overlap)[:3])}")
+        skill_overlap = user_skills & career_skills
+        if skill_overlap:
+            skill_bonus = min(len(skill_overlap) * 7, 21)
+            score += skill_bonus
+            reasons.append(f"Skill cocok: {', '.join(list(skill_overlap)[:3])}")
 
+        # 2. Interests (+12 category match, +5 if interest in description)
         if user_interests:
-            cat_match = any(kw in c.category.lower() for kw in user_interests)
+            cat_lower = c.category.lower()
+            cat_match = any(kw in cat_lower for kw in user_interests)
             if cat_match:
-                score += 10
+                score += 12
                 reasons.append("Kategori sesuai minat")
+            desc_lower = (c.description or "").lower()
+            desc_match = any(kw in desc_lower for kw in user_interests if kw not in cat_lower)
+            if desc_match:
+                score += 5
+
+        # 3. Work Values (+7 per matching value, max +14)
+        if user_values:
+            matched_values = []
+            for v in user_values:
+                target_cats = _VALUE_CATEGORY_MAP.get(v)
+                if target_cats and c.category in target_cats:
+                    matched_values.append(v)
+            if matched_values:
+                val_bonus = min(len(matched_values) * 7, 14)
+                score += val_bonus
+                reasons.append(f"Nilai sesuai: {', '.join(matched_values[:2])}")
+
+        # 4. Education (+8 if matches, -5 if explicitly incompatible)
+        edu_match = _education_level_matches(user_education, c.education_paths or [])
+        if edu_match:
+            score += 8
+            reasons.append("Pendidikan sesuai")
+        elif user_education and "tidak bisa kuliah" in user_constraints and any("s1" in (p or "").lower() or "sarjana" in (p or "").lower() for p in (c.education_paths or [])):
+            score -= 5
+
+        # 5. Constraints
+        for con in user_constraints:
+            rule = _CONSTRAINT_MAP.get(con)
+            if rule:
+                penalty_cats = rule.get("penalty_categories")
+                if penalty_cats and c.category in penalty_cats:
+                    score -= rule["penalty"]
+                    reasons.append(f"Kendala: {con}")
+                if rule.get("bonus_industries"):
+                    sal_max = _parse_salary(c.salary_max)
+                    if sal_max and sal_max >= 10_000_000:
+                        score += rule["bonus"]
+                if rule.get("penalty_if_no_bootcamp"):
+                    edu_paths = [p.lower() for p in (c.education_paths or [])]
+                    if not any("bootcamp" in p or "d3" in p or "sma" in p for p in edu_paths):
+                        score -= rule["penalty_if_no_bootcamp"]
+
+        # 6. Work Preferences (+3 per match, max +6)
+        if user_preferences:
+            matched_prefs = []
+            for p in user_preferences:
+                target_cats = _PREFERENCE_MAP.get(p)
+                if target_cats is None:
+                    matched_prefs.append(p)
+                elif target_cats and c.category in target_cats:
+                    matched_prefs.append(p)
+            if matched_prefs:
+                pref_bonus = min(len(matched_prefs) * 3, 6)
+                score += pref_bonus
+                reasons.append(f"Preferensi sesuai: {', '.join(matched_prefs[:2])}")
 
         score = min(score, 98)
+        score = max(score, 5)
 
         if score >= 80:
             label = "Cocok Tinggi"
@@ -302,7 +421,7 @@ def _fallback_chat(question: str) -> str:
     if "cara" in q or "pakai" in q:
         return "1. Daftar 2. Isi discovery 3. Dapat hasil 4. Eksplorasi laporan lengkap."
     if "beda" in q or "chatgpt" in q:
-        return "Life Compass menggunakan data 80+ karir Indonesia + discovery terstruktur 7 bagian, bukan tebakan biasa."
+        return "Life Compass menggunakan data karir Indonesia + discovery terstruktur 7 bagian, bukan tebakan biasa."
     if "aman" in q or "data" in q or "privasi" in q:
         return "Data dienkripsi, tidak dijual ke pihak ketiga, dan kamu bisa hapus akun kapan saja."
     if any(kw in q for kw in ["karir", "karier", "jurusan", "skill", "belajar", "kerja", "prospek", "gaji", "pendidikan", "pkwi", "magang", "interview", "wawancara", "cv", "portofolio", "sma", "smk", "kuliah", "lulus", "fresh graduate", "pindah karir", "bakat", "minat", "tes", "cocok"]):

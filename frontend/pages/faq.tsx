@@ -9,9 +9,9 @@ const FAQS = [
   { q: "Apakah gratis?", a: "Ya! Life Compass 100% gratis. Semua fitur bisa diakses tanpa biaya." },
   { q: "Berapa lama prosesnya?", a: "Discovery Journey hanya butuh 8–12 menit. Setelah itu kamu langsung dapat hasilnya." },
   { q: "Data saya aman?", a: "Data kamu dienkripsi, tidak dijual ke pihak ketiga, dan AI tidak dilatih dari data kamu. Kamu bisa hapus akun kapan saja." },
-  { q: "Apa bedanya dengan ChatGPT?", a: "Life Compass menggunakan discovery terstruktur 7 bagian + database 80+ karir Indonesia. Hasilnya lebih akurat dan relevan untuk pasar Indonesia." },
+  { q: "Apa bedanya dengan ChatGPT?", a: "Life Compass menggunakan discovery terstruktur 7 bagian + database karir Indonesia yang terus diperbarui. Hasilnya lebih akurat dan relevan untuk pasar Indonesia." },
   { q: "Bisa dipakai di HP?", a: "Bisa! Life Compass mobile-friendly dan bisa diakses dari browser HP mana pun." },
-  { q: "Karirnya karir apa aja?", a: "80+ karir dari 10 kategori: Teknologi, Kesehatan, Pendidikan, Pemerintahan, Kreatif, Bisnis, Teknik, Keuangan, Pariwisata, dan Pertanian." },
+  { q: "Karirnya karir apa aja?", a: "27 karir dari 10 kategori: Teknologi, Kesehatan, Pendidikan, Pemerintahan, Kreatif, Bisnis, Teknik, Keuangan, Pariwisata, dan Pertanian." },
 ];
 
 export default function FAQ() {
