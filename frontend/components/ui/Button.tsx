@@ -1,6 +1,6 @@
 import { ButtonHTMLAttributes, ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline";
 type Size = "sm" | "md" | "lg";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -11,16 +11,17 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<Variant, string> = {
-  primary: "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm",
-  secondary: "border-2 border-gray-200 text-gray-700 hover:bg-gray-50 active:bg-gray-100",
-  ghost: "text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200",
-  danger: "bg-red-600 text-white hover:bg-red-700 active:bg-red-800",
+  primary: "bg-ink text-white hover:bg-ink/90 active:scale-[0.97]",
+  secondary: "bg-primary-500 text-white hover:bg-primary-500/90 active:scale-[0.97]",
+  danger: "bg-red-500 text-white hover:bg-red-600 active:scale-[0.97]",
+  outline: "border-2 border-ink text-ink hover:bg-ink/5 active:scale-[0.97]",
+  ghost: "text-ink/70 hover:text-ink hover:bg-ink/5",
 };
 
 const sizeStyles: Record<Size, string> = {
-  sm: "px-3 py-1.5 text-xs rounded-lg",
-  md: "px-5 py-2.5 text-sm rounded-xl",
-  lg: "px-8 py-3.5 text-base rounded-xl",
+  sm: "px-4 py-1.5 text-xs rounded-xl",
+  md: "px-6 py-2.5 text-sm rounded-xl",
+  lg: "px-10 py-3.5 text-base rounded-xl",
 };
 
 export default function Button({
@@ -28,7 +29,7 @@ export default function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 font-medium transition-all active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 font-semibold transition-all disabled:opacity-40 disabled:pointer-events-none ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
       disabled={disabled || loading}
       {...props}
     >

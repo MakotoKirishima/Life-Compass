@@ -1,31 +1,27 @@
+import { ReactNode } from "react";
+import Card from "./Card";
 import Button from "./Button";
 
 interface EmptyStateProps {
   icon?: string;
   title: string;
   description?: string;
-  actionLabel?: string;
-  actionHref?: string;
-  onAction?: () => void;
+  action?: { label: string; href: string };
+  children?: ReactNode;
 }
 
-export default function EmptyState({ icon = "📭", title, description, actionLabel, actionHref, onAction }: EmptyStateProps) {
+export default function EmptyState({ icon = "📭", title, description, action, children }: EmptyStateProps) {
   return (
-    <div className="text-center py-16 px-4">
-      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-        {icon}
-      </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">{title}</h3>
-      {description && <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">{description}</p>}
-      {actionLabel && (
-        actionHref ? (
-          <a href={actionHref}>
-            <Button>{actionLabel}</Button>
-          </a>
-        ) : (
-          <Button onClick={onAction}>{actionLabel}</Button>
-        )
+    <Card className="text-center py-12">
+      <div className="text-4xl mb-4">{icon}</div>
+      <h3 className="text-lg font-bold text-ink mb-2">{title}</h3>
+      {description && <p className="text-ink/60 mb-6 max-w-sm mx-auto">{description}</p>}
+      {action && (
+        <a href={action.href}>
+          <Button>{action.label}</Button>
+        </a>
       )}
-    </div>
+      {children}
+    </Card>
   );
 }

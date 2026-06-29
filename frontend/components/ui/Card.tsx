@@ -5,6 +5,7 @@ interface CardProps {
   className?: string;
   hover?: boolean;
   padding?: "sm" | "md" | "lg";
+  border?: boolean;
 }
 
 const paddings = {
@@ -13,11 +14,11 @@ const paddings = {
   lg: "p-6 md:p-8",
 };
 
-export default function Card({ children, className = "", hover = false, padding = "md" }: CardProps) {
+export default function Card({ children, className = "", hover = false, padding = "md", border = true }: CardProps) {
   return (
     <div
-      className={`bg-white rounded-2xl border shadow-sm ${paddings[padding]} ${
-        hover ? "hover:shadow-md hover:border-gray-200 transition-all" : ""
+      className={`bg-card rounded-2xl ${border ? "border-2 border-ink shadow-sm" : "shadow-sm"} ${paddings[padding]} ${
+        hover ? "hover:shadow-md hover:-translate-y-0.5 transition-all" : ""
       } ${className}`}
     >
       {children}

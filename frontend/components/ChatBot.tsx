@@ -69,7 +69,7 @@ export default function ChatBot({ token, user, api }: { token?: string; user?: u
     <>
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-500 text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:shadow-xl hover:scale-105 active:scale-95 transition-all z-50"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-ink text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:shadow-xl hover:scale-105 active:scale-95 transition-all z-50 border-2 border-ink"
         aria-label="Buka asisten"
       >
         {open ? (
@@ -84,8 +84,8 @@ export default function ChatBot({ token, user, api }: { token?: string; user?: u
       </button>
 
       {open && (
-        <div className="fixed bottom-24 right-6 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border z-50 flex flex-col max-h-[500px] animate-in slide-in-from-bottom-4 duration-200">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-500 text-white px-4 py-3 rounded-t-2xl font-medium text-sm flex items-center gap-2">
+        <div className="fixed bottom-24 right-6 w-80 sm:w-96 bg-card border-2 border-ink rounded-2xl shadow-xl z-50 flex flex-col max-h-[500px] animate-in slide-in-from-bottom-4 duration-200">
+          <div className="bg-ink text-white px-4 py-3 rounded-t-[14px] font-semibold text-sm flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
@@ -98,37 +98,35 @@ export default function ChatBot({ token, user, api }: { token?: string; user?: u
                 key={i}
                 className={`text-sm p-3 rounded-xl max-w-[85%] leading-relaxed ${
                   m.role === "user"
-                    ? "bg-blue-600 text-white ml-auto rounded-br-md"
-                    : "bg-gray-100 text-gray-800 rounded-bl-md"
+                    ? "bg-ink text-white ml-auto"
+                    : "bg-warm text-ink border border-ink/10"
                 }`}
               >
                 {m.text}
               </div>
             ))}
             {loading && (
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              <div className="flex items-center gap-2 text-sm text-ink/40">
+                <span className="w-2 h-2 bg-ink/40 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 bg-ink/40 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 bg-ink/40 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             )}
             {error && (
-              <div className="text-xs text-red-500 text-center py-1">{error}</div>
+              <div className="text-xs text-primary-500 text-center py-1">{error}</div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
           {messages.length === 1 && !loading && (
             <div className="px-3 pb-2">
-              <p className="text-xs text-gray-400 mb-2">Coba tanyakan:</p>
+              <p className="text-xs text-ink/40 mb-2">Coba tanyakan:</p>
               <div className="flex flex-wrap gap-1.5">
                 {SUGGESTIONS.map((s, i) => (
                   <button
                     key={i}
-                    onClick={() => {
-                      setInput(s);
-                    }}
-                    className="text-xs bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 text-gray-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition"
+                    onClick={() => { setInput(s); }}
+                    className="text-xs bg-warm border border-ink/20 rounded-full px-3 py-1.5 text-ink/70 hover:bg-ink hover:text-white hover:border-ink transition"
                   >
                     {s}
                   </button>
@@ -137,7 +135,7 @@ export default function ChatBot({ token, user, api }: { token?: string; user?: u
             </div>
           )}
 
-          <div className="border-t p-3 flex gap-2">
+          <div className="border-t-2 border-ink/10 p-3 flex gap-2">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -148,12 +146,12 @@ export default function ChatBot({ token, user, api }: { token?: string; user?: u
                 }
               }}
               placeholder="Tanya sesuatu..."
-              className="flex-1 border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="flex-1 border-2 border-ink/20 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-ink focus:ring-0 bg-warm"
             />
             <button
               onClick={send}
               disabled={loading || !input.trim()}
-              className="bg-gradient-to-r from-blue-600 to-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-medium disabled:opacity-40 disabled:pointer-events-none hover:shadow-md transition-all active:scale-95"
+              className="bg-ink text-white px-4 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-40 disabled:pointer-events-none hover:shadow-md transition-all active:scale-95"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

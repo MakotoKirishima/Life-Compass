@@ -31,20 +31,20 @@ export default function PageShell({
         <meta property="og:description" content={desc} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <div className={`min-h-screen bg-gray-50 ${className}`}>
-        <nav className="bg-white shadow-sm border-b px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+      <div className={`min-h-screen bg-warm ${className}`}>
+        <nav className="bg-card border-b-2 border-ink px-6 py-4 flex items-center justify-between sticky top-0 z-40">
           <div className="flex items-center gap-3">
             {showBack && (
-              <Link href={backHref} className="text-gray-400 hover:text-gray-600 transition">
+              <Link href={backHref} className="text-ink/50 hover:text-ink transition">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </Link>
             )}
-            <Link href="/" className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
+            <Link href="/" className="text-xl font-bold text-ink">
               {SITE_NAME}
             </Link>
-            {title && <span className="text-gray-300 text-sm hidden sm:inline">/ {title}</span>}
+            {title && <span className="text-ink/30 text-sm hidden sm:inline">/ {title}</span>}
           </div>
           {rightElement && <div className="flex items-center gap-3">{rightElement}</div>}
         </nav>
