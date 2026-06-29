@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "cp -f out/404/index.html out/404.html",
     "start": "next start"
   },
   "dependencies": {

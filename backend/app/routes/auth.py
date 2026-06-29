@@ -1,4 +1,3 @@
-import asyncio
 import secrets
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -56,23 +55,40 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         return _make_user_response(user, db)
     raise HTTPException(status_code=400, detail="Email and password required")
 
+@router.get("/google/status")
+def google_status():
+    missing = []
+    if not settings.GOOGLE_CLIENT_ID:
+        missing.append("GOOGLE_CLIENT_ID")
+    if not settings.GOOGLE_CLIENT_SECRET:
+        missing.append("GOOGLE_CLIENT_SECRET")
+    if not settings.GOOGLE_REDIRECT_URI:
+        missing.append("GOOGLE_REDIRECT_URI")
+    return {"configured": len(missing) == 0, "missing": missing, "count": len(missing)}
+
 @router.get("/google/login")
 def google_login(request: Request):
     if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
         return JSONResponse(status_code=501, content={"detail": "Google login is not configured"})
     state = secrets.token_urlsafe(32)
     redirect_uri = settings.GOOGLE_REDIRECT_URI
-    params = f"client_id={settings.GOOGLE_CLIENT_ID}&redirect_uri={redirect_uri}&state={state}&response_type=code&scope=openid%20email%20profile"
-    return RedirectResponse(url=f"https://accounts.google.com/o/oauth2/v2/auth?{params}", status_code=302)
+    resp = RedirectResponse(url=f"https://accounts.google.com/o/oauth2/v2/auth?client_id={settings.GOOGLE_CLIENT_ID}&redirect_uri={redirect_uri}&state={state}&response_type=code&scope=openid%20email%20profile", status_code=302)
+    secure = settings.APP_ENV == "production"
+    domain = settings.COOKIE_DOMAIN if secure else None
+    resp.set_cookie(key="oauth_state", value=state, httponly=True, secure=secure, samesite="lax", max_age=300, path="/", domain=domain)
+    return resp
 
 @router.get("/google/callback")
-def google_callback(code: str = None, state: str = None, error: str = None, db: Session = Depends(get_db)):
+def google_callback(request: Request, code: str = None, state: str = None, error: str = None, db: Session = Depends(get_db)):
     if error:
         return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?error=google_auth_failed", status_code=302)
     if not code:
         return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?error=no_code", status_code=302)
     if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
         return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?error=google_not_configured", status_code=302)
+    stored_state = request.cookies.get("oauth_state")
+    if stored_state and state and stored_state != state:
+        return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?error=state_mismatch", status_code=302)
     try:
         token_resp = httpx.post("https://oauth2.googleapis.com/token", data={
             "code": code, "client_id": settings.GOOGLE_CLIENT_ID,
@@ -109,9 +125,11 @@ def google_callback(code: str = None, state: str = None, error: str = None, db: 
         secure = settings.APP_ENV == "production"
         resp.set_cookie(key="access_token", value=at, httponly=True, secure=secure, samesite="lax", max_age=max_age, path="/", domain=domain)
         resp.set_cookie(key="refresh_token", value=rt, httponly=True, secure=secure, samesite="lax", max_age=max_age, path="/api/auth", domain=domain)
+        resp.delete_cookie(key="oauth_state", path="/", domain=domain)
         return resp
     except Exception as e:
-        print(f"Google OAuth error: {e}")
+        import logging
+        logging.getLogger("lifecompass").error("Google OAuth error", exc_info=True)
         return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?error=server_error", status_code=302)
 
 @router.get("/me")
@@ -136,12 +154,12 @@ def get_me(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 @router.post("/refresh")
-def refresh_token(request: Request, db: Session = Depends(get_db)):
+async def refresh_token(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("refresh_token")
     if not token:
         body = {}
         try:
-            body = asyncio.run(request.json())
+            body = await request.json()
             token = body.get("refresh_token")
         except Exception:
             pass

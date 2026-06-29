@@ -1,18 +1,34 @@
 import os
+import logging
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from app.database import engine, Base
 from app.config import settings
 from app.auth import rate_limit_middleware
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger("lifecompass")
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Life Compass API", version="1.0.0")
 
 app.middleware("http")(rate_limit_middleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 origins = ["http://localhost:3000", "http://localhost:8000"]
-if settings.FRONTEND_URL:
+if settings.APP_ENV == "production":
+    origins = []
+if settings.FRONTEND_URL and settings.FRONTEND_URL not in origins:
     origins.append(settings.FRONTEND_URL)
 if settings.CORS_ALLOWED_ORIGINS:
     origins.extend([o.strip() for o in settings.CORS_ALLOWED_ORIGINS.split(",") if o.strip()])
@@ -30,6 +46,35 @@ def startup():
     os.makedirs(settings.DATA_DIR, exist_ok=True)
     _seed_initial_data()
     _seed_admin()
+    _log_config_status()
+
+def _log_config_status():
+    required = ["SECRET_KEY", "REFRESH_TOKEN_SECRET"]
+    optional = ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URI", "GEMINI_API_KEY"]
+    deployment = ["COOKIE_DOMAIN", "CORS_ALLOWED_ORIGINS", "FRONTEND_URL", "API_PUBLIC_URL"]
+    for key in required:
+        if not getattr(settings, key, ""):
+            logger.warning("%s is not set — authentication will fail", key)
+        else:
+            logger.info("%s is set", key)
+    for key in optional:
+        if not getattr(settings, key, ""):
+            logger.info("%s is not set — related feature disabled", key)
+        else:
+            logger.info("%s is set", key)
+    for key in deployment:
+        if not getattr(settings, key, ""):
+            logger.warning("%s is not set — deployment config incomplete", key)
+        else:
+            logger.info("%s is set", key)
+    google_missing = []
+    for key in ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URI"]:
+        if not getattr(settings, key, ""):
+            google_missing.append(key)
+    if google_missing:
+        logger.info("Google OAuth not fully configured (missing: %s)", ", ".join(google_missing))
+    else:
+        logger.info("Google OAuth configured")
 
 def _seed_initial_data():
     from sqlalchemy.orm import Session
@@ -44,7 +89,7 @@ def _seed_initial_data():
                 career = Career(**data, status="published")
                 db.add(career)
             db.commit()
-            print(f"Seeded {len(INITIAL_CAREERS)} careers")
+            logger.info("Seeded %d careers", len(INITIAL_CAREERS))
     finally:
         db.close()
 
@@ -68,7 +113,7 @@ def _seed_admin():
             )
             db.add(user)
             db.commit()
-            print(f"Admin seeded: {settings.INITIAL_ADMIN_EMAIL}")
+            logger.info("Admin seeded")
     finally:
         db.close()
 

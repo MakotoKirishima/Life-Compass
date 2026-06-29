@@ -1,11 +1,29 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional, List, Any
 from datetime import datetime
+import re
+
+EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
 class RegisterRequest(BaseModel):
     email: str
     password: str
     display_name: Optional[str] = None
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        if not EMAIL_RE.match(v):
+            raise ValueError("Format email tidak valid")
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("Password minimal 6 karakter")
+        return v
 
 class LoginRequest(BaseModel):
     email: Optional[str] = None
@@ -31,6 +49,14 @@ class DiscoveryInput(BaseModel):
     constraints: List[str] = []
     work_preferences: list = []
     reflection: Optional[str] = None
+
+    @field_validator("stage")
+    @classmethod
+    def validate_stage(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Stage wajib diisi")
+        return v
 
 class CareerOut(BaseModel):
     id: int
@@ -129,7 +155,7 @@ class ProfileUpdate(BaseModel):
     work_values: Optional[List[str]] = None
     skills: Optional[List[str]] = None
     constraints: Optional[List[str]] = None
-    work_preferences: Optional[dict] = None
+    work_preferences: Optional[list] = None
     reflection: Optional[str] = None
 
 class LandingContentOut(BaseModel):

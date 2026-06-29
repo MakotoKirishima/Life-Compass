@@ -272,15 +272,22 @@ def chat_response(question: str) -> str:
     if not GEMINI_AVAILABLE:
         return _fallback_chat(question)
 
-    system_prompt = """Kamu adalah asisten resmi Life Compass. Tugasmu hanya menjawab pertanyaan seputar:
-- Cara menggunakan Life Compass
-- Fitur gratis (semua fitur gratis, tidak ada biaya)
-- Cara baca hasil rekomendasi
-- Kebijakan privasi
-- Cara hapus akun
+    system_prompt = """Kamu adalah asisten karir dan edukasi untuk Life Compass. Tugasmu membantu pengguna dengan pertanyaan seputar:
 
-Jika ditanya di luar topik, jawab: "Maaf, saya hanya bisa membantu pertanyaan seputar Life Compass."
-Gunakan Bahasa Indonesia yang ramah."""
+- Arah karir, jurusan kuliah, dan perencanaan pendidikan
+- Skill yang perlu dipelajari untuk karir tertentu
+- Cara memilih karir sesuai minat dan bakat
+- Persiapan kerja, portofolio, dan wawancara
+- Eksperimen 7 hari dan rencana aksi karir
+- Cara membaca dan memanfaatkan hasil Life Compass
+- Fitur Life Compass (semua gratis, tidak ada biaya)
+- Motivasi karir dan self-discovery
+- Konteks karir di Indonesia
+
+Jika pertanyaan di luar topik (medis, hukum, keuangan profesional, ilegal, berbahaya), jawab dengan ramah:
+"Pertanyaanmu agak di luar fokus Life Compass. Aku bisa bantu jika pertanyaannya berkaitan dengan arah karir, jurusan, skill, rencana belajar, eksperimen 7 hari, atau cara memakai fitur Life Compass."
+
+Gunakan Bahasa Indonesia yang ramah, hangat, dan mendidik. Jangan menyarankan pembayaran atau premium."""
     try:
         chat = model.start_chat(system_instruction=system_prompt)
         resp = chat.send_message(question)
@@ -295,7 +302,23 @@ def _fallback_chat(question: str) -> str:
     if "cara" in q or "pakai" in q:
         return "1. Daftar 2. Isi discovery 3. Dapat hasil 4. Eksplorasi laporan lengkap."
     if "beda" in q or "chatgpt" in q:
-        return "Life Compass pake data 80+ karir Indonesia + discovery terstruktur."
+        return "Life Compass menggunakan data 80+ karir Indonesia + discovery terstruktur 7 bagian, bukan tebakan biasa."
     if "aman" in q or "data" in q or "privasi" in q:
-        return "Data dienkripsi, tidak dijual, bisa hapus akun kapan saja."
-    return "Maaf, saya hanya bisa membantu seputar Life Compass. Cek FAQ di /faq."
+        return "Data dienkripsi, tidak dijual ke pihak ketiga, dan kamu bisa hapus akun kapan saja."
+    if any(kw in q for kw in ["karir", "karier", "jurusan", "skill", "belajar", "kerja", "prospek", "gaji", "pendidikan", "pkwi", "magang", "interview", "wawancara", "cv", "portofolio", "sma", "smk", "kuliah", "lulus", "fresh graduate", "pindah karir", "bakat", "minat", "tes", "cocok"]):
+        return (
+            "Wah, pertanyaan bagus! 😊 Sayangnya saat ini aku sedang dalam mode offline dan belum terhubung ke database karir.\n\n"
+            "Tapi kamu tetap bisa mulai dengan:\n"
+            "1. **Isi Discovery** di dashboard — 7 pertanyaan sederhana, 8-12 menit\n"
+            "2. **Dapatkan rekomendasi karir** yang cocok dengan minat dan skillmu\n"
+            "3. **Coba Eksperimen 7 hari** untuk uji karir pilihanmu\n\n"
+            "Atau cek halaman FAQ untuk info lebih lanjut: /faq"
+        )
+    return (
+        "Pertanyaanmu agak di luar fokus Life Compass. Aku bisa bantu jika pertanyaannya berkaitan dengan "
+        "arah karir, jurusan, skill, rencana belajar, eksperimen 7 hari, atau cara memakai fitur Life Compass.\n\n"
+        "Contoh:\n"
+        "- \"Aku bingung pilih karir setelah SMA\"\n"
+        "- \"Skill apa yang harus kupelajari untuk data analyst?\"\n"
+        "- \"Aku suka desain dan teknologi, cocoknya ke mana?\""
+    )

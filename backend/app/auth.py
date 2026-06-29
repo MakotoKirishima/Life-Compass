@@ -19,7 +19,8 @@ RATE_LIMIT_WINDOW = 60
 RATE_LIMIT_MAX = 20
 
 async def rate_limit_middleware(request: Request, call_next):
-    client_ip = request.client.host if request.client else "unknown"
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    client_ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
     now = time.time()
     window = rate_limit_store[client_ip]
     window[:] = [t for t in window if t > now - RATE_LIMIT_WINDOW]

@@ -1,7 +1,6 @@
-import json, os
+import json
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from app.database import get_db
 from app.models import User, CareerMatch, Career, LandingContent, Testimonial, AdminSetting
 from app.auth import get_admin_user

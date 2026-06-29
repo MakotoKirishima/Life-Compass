@@ -33,7 +33,7 @@ class UserProfile(Base):
     work_values = Column(JSON, default=list)
     skills = Column(JSON, default=list)
     constraints = Column(JSON, default=list)
-    work_preferences = Column(JSON, default=dict)
+    work_preferences = Column(JSON, default=list)
     reflection = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)

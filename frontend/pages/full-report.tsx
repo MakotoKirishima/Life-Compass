@@ -1,6 +1,31 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Head from "next/head";
 import LockModal from "../components/LockModal";
+import Card from "../components/ui/Card";
+import Badge from "../components/ui/Badge";
+import Button from "../components/ui/Button";
+import LoadingState from "../components/ui/LoadingState";
+import PageShell from "../components/ui/PageShell";
+
+const SCORE_COLORS = {
+  "Cocok Tinggi": { bg: "bg-emerald-100", bar: "bg-emerald-500", text: "text-emerald-800" },
+  "Cocok Sedang": { bg: "bg-blue-100", bar: "bg-blue-500", text: "text-blue-800" },
+  "Coba Dulu": { bg: "bg-amber-100", bar: "bg-amber-500", text: "text-amber-800" },
+  "Kurang Cocok": { bg: "bg-red-100", bar: "bg-red-400", text: "text-red-800" },
+};
+
+function ScoreBar({ score, label }: { score: number; label: string }) {
+  const colors = SCORE_COLORS[label] || { bar: "bg-gray-400" };
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all duration-700 ${colors.bar}`} style={{ width: `${Math.min(score, 100)}%` }} />
+      </div>
+      <span className="text-xs font-semibold text-gray-500 w-12 text-right">{score}%</span>
+    </div>
+  );
+}
 
 export default function FullReport({ user, api }) {
   const router = useRouter();
@@ -12,75 +37,88 @@ export default function FullReport({ user, api }) {
   useEffect(() => {
     if (!user) { setShowLock(true); setLoading(false); return; }
     if (!id) return;
+    setLoading(true);
     fetch(`${api}/api/discovery/result/${id}`, {
       headers: { Authorization: `Bearer ${user.token}` },
     })
-      .then(r => r.json())
-      .then(res => { setResult(res); setLoading(false); })
+      .then((r) => r.json())
+      .then((res) => { setResult(res); setLoading(false); })
       .catch(() => setLoading(false));
   }, [user, id]);
 
   if (!user) return <LockModal show={showLock} />;
-  if (loading) return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
-      <div className="w-14 h-14 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
-  if (!result) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center bg-white rounded-2xl shadow-sm border p-8 max-w-sm">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </div>
-        <p className="text-gray-500">Laporan tidak ditemukan.</p>
-        <a href="/dashboard" className="text-blue-600 hover:underline text-sm mt-3 inline-block font-medium">← Kembali ke Dashboard</a>
-      </div>
-    </div>
-  );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center">
-        <a href="/dashboard" className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">Life Compass</a>
-        <a href="/dashboard" className="text-sm text-gray-500 hover:text-gray-700 font-medium inline-flex items-center gap-1">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
-          Dashboard
-        </a>
-      </nav>
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-sm border p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Full Report</h2>
-          <p className="text-gray-500 mb-6">Laporan lengkap hasil discovery karirmu</p>
-          <p className="text-gray-600 mb-8 leading-relaxed">{result.summary}</p>
+    <PageShell title="Full Report" showBack backHref={`/result?id=${id}`}>
+      <Head>
+        <title>Full Report — Life Compass</title>
+      </Head>
+      {loading ? (
+        <LoadingState skeleton="card" count={2} />
+      ) : !result ? (
+        <Card className="text-center py-12">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">📄</div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Laporan tidak ditemukan</h3>
+          <p className="text-gray-500 mb-6">Mungkin tautan ini sudah tidak valid.</p>
+          <a href="/dashboard"><Button>Kembali ke Dashboard</Button></a>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          <Card padding="lg">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Laporan Lengkap</h2>
+            <p className="text-gray-500 mb-6">Analisis mendalam hasil discovery karirmu</p>
+            <p className="text-gray-600 leading-relaxed">{result.summary}</p>
+          </Card>
 
-          <div className="space-y-4">
-            <h3 className="font-bold text-xl text-gray-900 mb-4">3 Rekomendasi Karir Teratas</h3>
-            {(result.results || []).slice(0, 3).map((c, i) => (
-              <div key={i} className="border rounded-xl p-5 hover:shadow-sm transition">
-                <span className={`inline-block text-xs px-3 py-1 rounded-full mb-2 text-white font-medium ${i === 0 ? "bg-emerald-500" : i === 1 ? "bg-amber-500" : "bg-blue-500"}`}>
-                  {c.label}
-                </span>
-                <h4 className="font-semibold text-lg text-gray-900">{c.title}</h4>
-                <p className="text-sm text-gray-600 mt-1">{c.reason}</p>
-              </div>
-            ))}
-          </div>
+          <Card padding="lg">
+            <h3 className="font-bold text-xl text-gray-900 mb-4">Semua Skor Kecocokan</h3>
+            <div className="space-y-4">
+              {(result.results || []).map((c, i) => {
+                const colors = SCORE_COLORS[c.label] || { bg: "bg-gray-100", text: "text-gray-800" };
+                return (
+                  <div key={i} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={i === 0 ? "emerald" : i === 1 ? "amber" : i === 2 ? "blue" : "gray"}>
+                          #{i + 1}
+                        </Badge>
+                        <h4 className="font-medium text-gray-900">{c.title}</h4>
+                      </div>
+                      <span className={`text-xs font-semibold ${colors.text}`}>{c.label}</span>
+                    </div>
+                    <ScoreBar score={c.score} label={c.label} />
+                    {c.reason && <p className="text-xs text-gray-500 mt-1.5">{c.reason}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
 
-          {result.experiment_plan && result.experiment_plan.length > 0 && (
-            <div className="mt-8 bg-gray-50 rounded-xl p-5">
-              <h3 className="font-semibold text-lg text-gray-900 mb-3">Rencana Eksperimen 7 Hari</h3>
+          {(result.experiment_plan || []).length > 0 && (
+            <Card padding="lg">
+              <h3 className="font-bold text-lg text-gray-900 mb-3">Rencana Eksperimen 7 Hari</h3>
+              <p className="text-sm text-gray-500 mb-4">Langkah konkret untuk menguji karir pilihanmu:</p>
               <div className="space-y-2">
                 {result.experiment_plan.map((task, i) => (
-                  <div key={i} className="flex items-start gap-3 text-sm">
+                  <div key={i} className="flex items-start gap-3 text-sm bg-gray-50 rounded-xl p-3">
                     <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center shrink-0 text-xs font-medium">{i + 1}</span>
-                    <span className="text-gray-700">{task}</span>
+                    <span className="text-gray-700 pt-0.5">{task}</span>
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
           )}
+
+          <div className="flex flex-wrap gap-3">
+            <a href={`/result?id=${id}`}>
+              <Button variant="secondary">Kembali ke Hasil</Button>
+            </a>
+            <a href="/dashboard">
+              <Button variant="secondary">Dashboard</Button>
+            </a>
+          </div>
         </div>
-      </main>
-    </div>
+      )}
+    </PageShell>
   );
 }
