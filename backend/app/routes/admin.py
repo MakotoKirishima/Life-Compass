@@ -5,7 +5,8 @@ from app.database import get_db
 from app.models import User, CareerMatch, Career, LandingContent, Testimonial, AdminSetting
 from app.auth import get_admin_user
 from app.config import settings
-from app.gemini import GEMINI_AVAILABLE
+from app.gemini import GEMINI_AVAILABLE, AI_AVAILABLE, AI_PROVIDER
+
 from datetime import datetime
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -131,6 +132,8 @@ Bahasa Indonesia. Salary marked as 'Perkiraan/Estimasi'. Market prospect dan ai 
 def get_settings(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
     announcement = db.query(AdminSetting).filter(AdminSetting.key == "announcement").first()
     return {
+        "ai_available": AI_AVAILABLE,
+        "ai_provider": AI_PROVIDER,
         "gemini_available": GEMINI_AVAILABLE,
         "gemini_key_set": bool(settings.GEMINI_API_KEY),
         "r2_backup_enabled": settings.R2_BACKUP_ENABLED,

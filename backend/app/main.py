@@ -126,24 +126,99 @@ app.include_router(admin.router)
 app.include_router(chatbot.router)
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "version": "1.0.0", "gemini_available": bool(settings.GEMINI_API_KEY)}
+    from app.gemini import AI_AVAILABLE, AI_PROVIDER
+    return {
+        "status": "ok",
+        "version": "1.0.0",
+        "ai_available": AI_AVAILABLE,
+        "ai_provider": AI_PROVIDER,
+        "gemini_available": bool(settings.GEMINI_API_KEY),
+    }
 
 @app.get("/api/sample-report")
 def sample_report():
+    dims_uiux_v2 = {
+        "skills_alignment": {"raw": 82, "confidence": 0.7},
+        "interest_resonance": {"raw": 90, "confidence": 0.8},
+        "values_alignment": {"raw": 75, "confidence": 0.6},
+        "cognitive_fit": {"raw": 70, "confidence": 0.5},
+        "education_alignment": {"raw": 60, "confidence": 0.8},
+        "constraint_impact": {"raw": 85, "confidence": 0.7},
+        "environment_fit": {"raw": 78, "confidence": 0.6},
+        "market_timing": {"raw": 72, "confidence": 0.4},
+        "trajectory_alignment": {"raw": 65, "confidence": 0.4},
+    }
+    dims_frontend_v2 = {
+        "skills_alignment": {"raw": 70, "confidence": 0.6},
+        "interest_resonance": {"raw": 75, "confidence": 0.7},
+        "values_alignment": {"raw": 65, "confidence": 0.5},
+        "cognitive_fit": {"raw": 72, "confidence": 0.5},
+        "education_alignment": {"raw": 60, "confidence": 0.8},
+        "constraint_impact": {"raw": 60, "confidence": 0.6},
+        "environment_fit": {"raw": 82, "confidence": 0.6},
+        "market_timing": {"raw": 80, "confidence": 0.5},
+        "trajectory_alignment": {"raw": 70, "confidence": 0.4},
+    }
+    tier1 = [
+        {"career_id": 3, "title": "UI/UX Designer",
+         "feasibility_flag": "REACHABLE_NOW", "feasibility_reason": "Pendidikan dan skill dasar sesuai",
+         "final_adjusted_score": 78, "weighted_raw_score": 85, "confidence_score": 0.78,
+         "confidence_band": [65, 88], "tier": 1, "label": "Strong Match — Start Now",
+         "headline": "UI/UX Designer cocok denganmu karena minat desain dan analisa yang kuat.",
+         "reasoning": ["Minat desain + skill analisa cocok dengan tugas utama UI/UX Designer",
+                       "Skill Figma bisa dipelajari dalam 2-3 bulan",
+                       "Prospek pasar UI/UX di Indonesia sedang naik (+18% year-over-year)"],
+         "dimensions": dims_uiux_v2,
+         "gap_analysis": {
+             "skills": {"critical_gaps": [
+                 {"skill": "Figma", "severity": "High", "close_pathway": "Ikuti tutorial Figma (gratis) dan buat 1 portofolio case study",
+                  "estimated_time": "2-3 bulan", "cost": "Gratis"},
+                 {"skill": "User Research", "severity": "High", "close_pathway": "Praktik wawancara dengan 3 teman",
+                  "estimated_time": "1 bulan", "cost": "Gratis"},
+             ], "important_gaps": [], "accelerator_gaps": [], "anti_skill_conflicts": []},
+             "education": {"user_level": "SMA/SMK", "career_typical": "S1 Desain Komunikasi Visual, Bootcamp UI/UX",
+                           "career_minimum": "Bootcamp/Portofolio", "recommendation": "Bootcamp atau kursus online + portofolio",
+                           "estimated_time": "6-12 bulan", "estimated_cost": "Rp 1-5 juta"},
+             "portfolio": {"missing": [], "present": []},
+             "interview": {"technical_readiness": "Perlu persiapan", "behavioral_readiness": "Perlu persiapan",
+                           "domain_readiness": "Perlu persiapan", "gaps": []},
+             "timeline": {"total_months": 6, "milestones": [], "urgent_path": None},
+         },
+         "hiring_readiness": None, "personalized_timeline": None},
+    ]
+    tier2 = [
+        {"career_id": 1, "title": "Frontend Developer",
+         "feasibility_flag": "REACHABLE_NEAR", "feasibility_reason": "Butuh skill programming dasar",
+         "final_adjusted_score": 68, "weighted_raw_score": 72, "confidence_score": 0.65,
+         "confidence_band": [55, 80], "tier": 2, "label": "Good Match — Invest to Get There",
+         "headline": "Frontend Developer: butuh belajar coding, tapi kreativitasmu jadi nilai plus.",
+         "reasoning": ["Kreativitas dan ketelitianmu berguna di pengembangan frontend",
+                       "Butuh belajar HTML/CSS/JavaScript — estimasi 3-6 bulan"],
+         "dimensions": dims_frontend_v2,
+         "gap_analysis": None, "hiring_readiness": None, "personalized_timeline": None},
+    ]
     return {
-        "summary": "Kamu memiliki minat di bidang teknologi dan kreativitas. Dengan skill analisa dan desain yang kamu miliki, beberapa karir menarik bisa kamu coba.",
-        "top_recommendation": {"career_title": "UI/UX Designer", "score": 85, "label": "Cocok Tinggi", "reason": "Minat desain + skill analisa cocok dengan tugas utama UI/UX Designer"},
-        "exploration": {"career_title": "Frontend Developer", "score": 72, "label": "Cocok Sedang", "reason": "Kreativitas dan ketelitianmu berguna di pengembangan frontend"},
-        "risk_note": "Pastikan kamu meng-update skill secara berkala.",
+        "match_id": 0, "summary": "Kamu memiliki minat di bidang teknologi dan kreativitas. Dengan 9 dimensi penilaian dan 3-pass scoring engine, kami menemukan bahwa UI/UX Designer adalah rekomendasi utama — dengan feasibility REACHABLE_NOW. Gap utama: Figma dan User Research. Timeline: 6 bulan ke hiring-ready.",
+        "assessment_version": "v2",
+        "top_recommendation": {"career_title": "UI/UX Designer", "score": 78, "label": "Strong Match — Start Now", "reason": "Minat desain + skill analisa cocok dengan tugas utama UI/UX Designer"},
+        "exploration": {"career_title": "Frontend Developer", "score": 68, "label": "Good Match — Invest to Get There", "reason": "Kreativitas dan ketelitianmu berguna di pengembangan frontend"},
+        "risk_note": "Pastikan kamu meng-update skill secara berkala. Beberapa posisi mungkin memerlukan portofolio yang kuat. AI displacement risk UI/UX: Rendah (20%).",
         "experiment_plan": [
-            "Hari 1: Cari 3 lowongan UI/UX Designer dan catat skill yang diminta",
-            "Hari 2: Tonton 1 video tentang keseharian UI/UX Designer",
-            "Hari 3: Coba redesign 1 aplikasi sederhana",
-            "Hari 4: Hubungi 1 orang yang bekerja sebagai UI/UX Designer",
-            "Hari 5: Baca artikel tentang perkembangan desain digital",
-            "Hari 6: Bandingkan 2 jalur pendidikan",
-            "Hari 7: Diskusikan dengan teman"
-        ]
+            "Hari 1: Cari 3 lowongan UI/UX Designer di Glints/Jobstreet, catat skill yang paling sering diminta",
+            "Hari 2: Tonton 1 video YouTube 'Day in the Life' UI/UX Designer dari praktisi Indonesia",
+            "Hari 3: Coba redesign 1 halaman aplikasi favoritmu pakai Figma (gratis)",
+            "Hari 4: Cari dan follow 3 desainer Indonesia di LinkedIn/Dribbble, amati portofolio mereka",
+            "Hari 5: Baca 1 artikel tentang perbedaan UI vs UX di Medium atau Glints Blog",
+            "Hari 6: Ikuti 1 tutorial Figma pemula (30 menit) dan buat satu komponen sederhana",
+            "Hari 7: Tulis refleksi: apa yang paling kamu suka dari minggu ini? Masih tertarik?"
+        ],
+        "results": [
+            {"title": "UI/UX Designer", "score": 78, "label": "Strong Match — Start Now", "reason": "Minat desain + skill analisa cocok", "dimensions": dims_uiux_v2, "feasibility_flag": "REACHABLE_NOW", "tier": 1, "final_adjusted_score": 78, "confidence_band": [65, 88]},
+            {"title": "Frontend Developer", "score": 68, "label": "Good Match — Invest to Get There", "reason": "Kreativitas dan ketelitianmu berguna", "dimensions": dims_frontend_v2, "feasibility_flag": "REACHABLE_NEAR", "tier": 2, "final_adjusted_score": 68, "confidence_band": [55, 80]},
+        ],
+        "tier1": tier1, "tier2": tier2, "tier3": [],
+        "gap_analysis": tier1[0]["gap_analysis"],
+        "pivot_map": {"UI/UX Designer": ["Frontend Developer (Adjacent)", "Product Manager (Aspiration)"]},
     }
 
 @app.get("/api/user/profile")

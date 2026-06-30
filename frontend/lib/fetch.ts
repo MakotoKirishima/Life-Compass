@@ -56,7 +56,7 @@ export async function safeFetch<T = unknown>(
     }
 
     if (!res.ok) {
-      if (res.status === 401 || res.status === 403) {
+      if (res.status === 401) {
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("auth:unauthorized", { detail: { status: res.status } }));
         }

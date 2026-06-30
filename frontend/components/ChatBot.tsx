@@ -4,16 +4,20 @@ import { safeFetch } from "../lib/fetch";
 const DEFAULT_API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const SUGGESTIONS = [
+  "Jelaskan skor hasil discovery-ku",
   "Aku bingung pilih karir setelah SMA",
   "Skill apa yang harus kupelajari untuk data analyst?",
   "Aku suka desain dan teknologi, cocoknya ke mana?",
-  "Buatkan eksperimen 7 hari untuk mencoba UI/UX design",
+  "Buatkan eksperimen 7 hari untuk UI/UX",
+  "Gimana cara pindah karir dari marketing ke IT?",
+  "Apa prospek karir frontend developer di Indonesia?",
+  "Apa langkah pertama yang harus aku lakukan?",
 ];
 
 export default function ChatBot({ token, user, api }: { token?: string; user?: unknown; api?: string }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: string; text: string }[]>([
-    { role: "bot", text: "Halo! Ada yang bisa saya bantu seputar karir dan Life Compass?" },
+    { role: "bot", text: "👋 Halo! Aku asisten karir Life Compass. Aku udah baca hasil discovery-mu, jadi aku bisa kasih saran yang lebih personal. Tanya apa aja soal karir, jurusan, skill, atau hasil skor kamu! 😊" },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,35 +36,59 @@ export default function ChatBot({ token, user, api }: { token?: string; user?: u
     setMessages((prev) => [...prev, { role: "user", text: q }]);
     setLoading(true);
 
+    // Add an empty bot message that will be filled via streaming
+    setMessages((prev) => [...prev, { role: "bot", text: "" }]);
+
     const baseApi = api || DEFAULT_API;
     try {
-      const res = await safeFetch<{ answer: string }>("/api/chat/", {
-          method: "POST",
-        data: { question: q },
-        token,
-        baseUrl: baseApi,
+      const response = await fetch(`${baseApi}/api/chat/stream`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ question: q }),
       });
 
-      if (res.ok && res.data?.answer) {
-        setMessages((prev) => [...prev, { role: "bot", text: res.data.answer }]);
-      } else if (res.status === 401) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "bot", text: "Sesi kamu telah berakhir. Silakan login ulang untuk menggunakan asisten." },
-        ]);
-      } else if (res.error) {
-        setMessages((prev) => [...prev, { role: "bot", text: `Maaf, ${res.error.toLowerCase()}` }]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { role: "bot", text: "Terjadi kendala saat memproses permintaanmu. Coba ulangi beberapa saat lagi." },
-        ]);
+      if (!response.ok) {
+        throw new Error("Request failed");
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No reader");
+
+      const decoder = new TextDecoder();
+      let fullText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            if (data === "[DONE]") continue;
+            fullText += data;
+            setMessages((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1] = { role: "bot", text: fullText };
+              return updated;
+            });
+          }
+        }
       }
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", text: "Terjadi kendala saat memproses permintaanmu. Coba ulangi beberapa saat lagi atau sederhanakan pertanyaanmu." },
-      ]);
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          role: "bot",
+          text: "Terjadi kendala saat memproses permintaanmu. Coba ulangi beberapa saat lagi atau sederhanakan pertanyaanmu.",
+        };
+        return updated;
+      });
     }
     setLoading(false);
   };
